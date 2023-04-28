@@ -1,12 +1,4 @@
 { "compressionlevel":-1,
- "editorsettings":
-    {
-     "export":
-        {
-         "format":"json",
-         "target":"final.json"
-        }
-    },
  "height":20,
  "infinite":false,
  "layers":[
@@ -17,17 +9,17 @@
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+            30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 49, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+            30, 30, 30, 30, 30, 30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 49, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-            30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+            30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 50, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
             30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
@@ -173,8 +165,227 @@
  "tileheight":32,
  "tilesets":[
         {
+         "columns":8,
          "firstgid":1,
-         "source":"tilesets\/tmw_desert_spacing_fixed.tsx"
+         "image":"tilesets\/tmw_desert_spacing_fixed.png",
+         "imageheight":198,
+         "imagewidth":264,
+         "margin":0,
+         "name":"tmw_desert_spacing_fixed",
+         "spacing":1,
+         "tilecount":48,
+         "tileheight":32,
+         "tilewidth":32
+        }, 
+        {
+         "columns":0,
+         "firstgid":49,
+         "grid":
+            {
+             "height":1,
+             "orientation":"orthogonal",
+             "width":1
+            },
+         "margin":0,
+         "name":"Items",
+         "spacing":0,
+         "tilecount":32,
+         "tileheight":128,
+         "tiles":[
+                {
+                 "id":0,
+                 "image":"tilesets\/Pureassets\/coinBronze.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":1,
+                 "image":"tilesets\/Pureassets\/coinGold.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":2,
+                 "image":"tilesets\/Pureassets\/coinGold_ll.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":3,
+                 "image":"tilesets\/Pureassets\/coinGold_lr.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":4,
+                 "image":"tilesets\/Pureassets\/coinGold_ul.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":5,
+                 "image":"tilesets\/Pureassets\/coinGold_ur.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":6,
+                 "image":"tilesets\/Pureassets\/coinSilver.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":7,
+                 "image":"tilesets\/Pureassets\/coinSilver_test.png",
+                 "imageheight":64,
+                 "imagewidth":64
+                }, 
+                {
+                 "id":8,
+                 "image":"tilesets\/Pureassets\/flagGreen_down.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":9,
+                 "image":"tilesets\/Pureassets\/flagGreen1.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":10,
+                 "image":"tilesets\/Pureassets\/flagGreen2.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":11,
+                 "image":"tilesets\/Pureassets\/flagRed_down.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":12,
+                 "image":"tilesets\/Pureassets\/flagRed1.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":13,
+                 "image":"tilesets\/Pureassets\/flagRed2.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":14,
+                 "image":"tilesets\/Pureassets\/flagYellow_down.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":15,
+                 "image":"tilesets\/Pureassets\/flagYellow1.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":16,
+                 "image":"tilesets\/Pureassets\/flagYellow2.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":17,
+                 "image":"tilesets\/Pureassets\/gemBlue.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":18,
+                 "image":"tilesets\/Pureassets\/gemGreen.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":19,
+                 "image":"tilesets\/Pureassets\/gemRed.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":20,
+                 "image":"tilesets\/Pureassets\/gemYellow.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":21,
+                 "image":"tilesets\/Pureassets\/gold_1.png",
+                 "imageheight":64,
+                 "imagewidth":64
+                }, 
+                {
+                 "id":22,
+                 "image":"tilesets\/Pureassets\/gold_2.png",
+                 "imageheight":64,
+                 "imagewidth":64
+                }, 
+                {
+                 "id":23,
+                 "image":"tilesets\/Pureassets\/gold_3.png",
+                 "imageheight":64,
+                 "imagewidth":64
+                }, 
+                {
+                 "id":24,
+                 "image":"tilesets\/Pureassets\/gold_4.png",
+                 "imageheight":64,
+                 "imagewidth":64
+                }, 
+                {
+                 "id":25,
+                 "image":"tilesets\/Pureassets\/keyBlue.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":26,
+                 "image":"tilesets\/Pureassets\/keyGreen.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":27,
+                 "image":"tilesets\/Pureassets\/keyRed.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":28,
+                 "image":"tilesets\/Pureassets\/keyYellow.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":29,
+                 "image":"tilesets\/Pureassets\/ladderMid.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                },
+            
+                {
+                 "id":30,
+                 "image":"tilesets\/Pureassets\/ladderTop.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }, 
+                {
+                 "id":31,
+                 "image":"tilesets\/Pureassets\/star.png",
+                 "imageheight":128,
+                 "imagewidth":128
+                }],
+         "tilewidth":128
         }],
  "tilewidth":32,
  "type":"map",
