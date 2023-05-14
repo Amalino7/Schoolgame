@@ -5,8 +5,6 @@ import math
 from typing import Optional
 import arcade
 import os
-
-from arcade.sprite import PyMunk
 SCREEN_TITLE = "PyMunk Platformer"
 
 # How big are our image tiles?
@@ -14,7 +12,8 @@ SPRITE_IMAGE_SIZE = 128
 
 # Scale sprites up or down
 SPRITE_SCALING_PLAYER = 0.5
-SPRITE_SCALING_TILES=2
+SPRITE_SCALING_TILES = 2
+
 # Scaled sprite size for tiles
 SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
 
@@ -80,6 +79,7 @@ class PlayerSprite(arcade.Sprite):
                  item_list: arcade.SpriteList,
                  hit_box_algorithm):
         """ Init """
+        self.physics_engine = Optional[arcade.PymunkPhysicsEngine]
         # Let parent initialize
         super().__init__()
 
@@ -132,39 +132,22 @@ class PlayerSprite(arcade.Sprite):
         self.item_list=item_list
         # self.ladder_list = ladder_list
         self.is_on_ladder = False
-    # def on_update(self, delta_time):
-        
+
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
         """ Handle being moved by the pymunk engine """
-        # Figure out if we need to face left or right
-        # print("hmm",flush=True)
-        
-        #take a coin alg
+
         itemhitlist=arcade.check_for_collision_with_list(self,self.item_list)
         if len(itemhitlist)>0:
             if self.is_trying_to_take_object==True:
                 for i in itemhitlist:
                     i.remove_from_sprite_lists()
 
+        # Figure out if we need to face left or right
         if dx < -DEAD_ZONE and self.character_face_direction == RIGHT_FACING:
             self.character_face_direction = LEFT_FACING
         elif dx > DEAD_ZONE and self.character_face_direction == LEFT_FACING:
             self.character_face_direction = RIGHT_FACING
 
-
-        # Are we on a ladder?
-        # if len(arcade.check_for_collision_with_list(self, self.ladder_list)) > 0:
-        #     if not self.is_on_ladder:
-        #         self.is_on_ladder = True
-        #         self.pymunk.gravity = (0, 0)
-        #         self.pymunk.damping = 0.0001
-        #         self.pymunk.max_vertical_velocity = PLAYER_MAX_HORIZONTAL_SPEED
-        # else:
-        #     if self.is_on_ladder:
-        #         self.pymunk.damping = 1.0
-        #         self.pymunk.max_vertical_velocity = PLAYER_MAX_VERTICAL_SPEED
-        #         self.is_on_ladder = False
-        #         self.pymunk.gravity = None
 
         # Add to the odometer how far we've moved
         self.x_odometer += dx
@@ -194,6 +177,17 @@ class BulletSprite(arcade.SpriteSolidColor):
         # If the bullet falls below the screen, remove it
         if self.center_y < -100:
             self.remove_from_sprite_lists()
+    
+
+class Button(arcade.Sprite):
+    def __init__(self, x, y):
+        super().__init__(
+            ":resources:images/tiles/boxCrate_double.png",
+            center_x=x,
+            center_y=y
+        )
+        self.pressed = False
+
 
 class GameWindow(arcade.Window):
     """ Main Window """
@@ -210,14 +204,20 @@ class GameWindow(arcade.Window):
         self.end_of_map = 0  #indicate endpoint
         # Sprite lists we need
         self.background: Optional[arcade.SpriteList] = None
+        self.end_points: Optional[arcade.SpriteList] = None
         self.player_list: Optional[arcade.SpriteList] = None
         self.wall_list: Optional[arcade.SpriteList] = None
         self.bullet_list: Optional[arcade.SpriteList] = None
         self.item_list: Optional[arcade.SpriteList] = None
         self.moving_sprites_list: Optional[arcade.SpriteList] = None
-        self.end_points: Optional[arcade.SpriteList] = None
         self.ladder_list: Optional[arcade.SpriteList] = None
+        self.pushable_objects_list: Optional[arcade.SpriteList] = None
+        self.door_list: Optional[arcade.SpriteList] = None
         self.is_trying_to_take_object: bool=False
+
+        self.door_count1 = 0
+        self.door_count2 = 0
+
         # Track the current state of what key is pressed
         self.left_pressed: bool = False
         self.right_pressed: bool = False
@@ -231,6 +231,7 @@ class GameWindow(arcade.Window):
         # Physics engine
         self.physics_engine: Optional[arcade.PymunkPhysicsEngine] = None
         self.spawn_point=None
+
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
 
@@ -241,6 +242,13 @@ class GameWindow(arcade.Window):
         # Create the sprite lists
         self.player_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
+
+        self.button1 = Button(1600, 1000)
+        self.button2 = Button(300, 1200)
+
+        self.button_list = arcade.SpriteList()
+        self.button_list.append(self.button1)
+        self.button_list.append(self.button2)
 
         # Map name
         cwd=os.getcwd()
@@ -254,24 +262,25 @@ class GameWindow(arcade.Window):
 
         # Pull the sprite layers out of the tile map
         self.wall_list = tile_map.sprite_lists["Platforms"]
+        self.pushable_objects_list = tile_map.sprite_lists["Pushable Items"]
         self.item_list = tile_map.sprite_lists["Dynamic Items"]
         self.ladder_list = tile_map.sprite_lists["Ladders"]
-        self.moving_sprites_list = tile_map.sprite_lists["Moving Platforms"]
-        self.background = tile_map.sprite_lists["Background"]
-        
+        self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms']
+        self.background = tile_map.sprite_lists['Background']
+        self.door1 = tile_map.sprite_lists["Door1"]
+        self.door2 = tile_map.sprite_lists["Door2"]
         self.end_points = tile_map.sprite_lists["Despawn"]
         self.spawn_point = tile_map.object_lists["Spawn"][self.respawn_index]
         # self.spawn_points = tile_map.get_tilemap_layer("Spawn")#spawn point
+
         self.camera=arcade.Camera(self.width,self.height)
         # Create player sprite
         self.player_sprite = PlayerSprite(self.item_list, hit_box_algorithm="Detailed")
 
         # Set player location
+        
         self.player_sprite.center_x = self.spawn_point.shape[0]
         self.player_sprite.center_y=self.spawn_point.shape[1]
-        # self.player_sprite.center_x = SPRITE_SIZE * grid_x + SPRITE_SIZE / 2
-        # self.player_sprite.center_y = SPRITE_SIZE * grid_y + SPRITE_SIZE / 2
-
         # Add to player sprite list
         self.player_list.append(self.player_sprite)
 
@@ -287,9 +296,16 @@ class GameWindow(arcade.Window):
 
         # Set the gravity. (0, 0) is good for outer space and top-down.
         gravity = (0, -0)
+
         # Create the physics engine
         self.physics_engine = arcade.PymunkPhysicsEngine(damping=damping,
                                                          gravity=gravity,)
+        
+        self.physics_engine.add_sprite_list(self.pushable_objects_list,
+                                            friction=0.7,
+                                            collision_type="push",
+                                            body_type=arcade.PymunkPhysicsEngine.DYNAMIC)
+
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             if self.is_trying_to_take_object==True:
                 item_sprite.remove_from_sprite_lists()
@@ -302,6 +318,8 @@ class GameWindow(arcade.Window):
                 self.respawn_index=0
             self.setup()
         self.physics_engine.add_collision_handler("player1","end",post_handler=reached_end_point)
+
+        # self.physics_engine.
         def wall_hit_handler(bullet_sprite, _wall_sprite, _arbiter, _space, _data):
             """ Called for bullet/wall collision """
             bullet_sprite.remove_from_sprite_lists()
@@ -346,6 +364,18 @@ class GameWindow(arcade.Window):
                                             # friction=WALL_FRICTION,
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
+        
+
+        self.physics_engine.add_sprite_list(self.door1,
+                                            # friction=WALL_FRICTION,
+                                            collision_type="door",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+        
+        self.physics_engine.add_sprite_list(self.door2,
+                                            # friction=WALL_FRICTION,
+                                            collision_type="door",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+        
 
         # Create the items
         # self.physics_engine.add_sprite_list(self.item_list,
@@ -462,6 +492,47 @@ class GameWindow(arcade.Window):
     def on_update(self, delta_time):
         """ Movement and game logic """
 
+    # Button logic
+        for i in self.button_list:
+            for j in self.pushable_objects_list:
+                if self.player_sprite.collides_with_sprite(i) or j.collides_with_sprite(i):
+                    i.pressed = True
+                elif not i.collides_with_list(self.pushable_objects_list):
+                    i.pressed = False
+        
+        for i in self.button_list:
+            if i.pressed == True:
+                i.texture = arcade.load_texture(
+                ":resources:images/items/coinGold.png")
+            else:
+                i.texture = arcade.load_texture(
+                ":resources:images/tiles/boxCrate_double.png")
+
+
+        # Door/Button logic
+        if self.button1.pressed == False and self.door_count1 == 2:
+            self.door_count1 = 0
+            self.physics_engine.add_sprite_list(self.door1,
+                                                # friction=WALL_FRICTION,
+                                                collision_type="door",
+                                                body_type=arcade.PymunkPhysicsEngine.STATIC)
+        elif self.button1.pressed == True and self.door_count1 < 2:
+            for i in self.door1:
+                self.door_count1 += 1
+                self.physics_engine.remove_sprite(i)
+        
+        if self.button2.pressed == False and self.door_count2 == 4:
+            self.door_count2 = 0
+            self.physics_engine.add_sprite_list(self.door2,
+                                                # friction=WALL_FRICTION,
+                                                collision_type="door",
+                                                body_type=arcade.PymunkPhysicsEngine.STATIC)
+        elif self.button2.pressed == True and self.door_count2 < 4:
+            for i in self.door2:
+                self.door_count2 += 1
+                self.physics_engine.remove_sprite(i)
+
+
         # is_on_ground = self.physics_engine.is_on_ground(self.player_sprite)
         # Update player forces based on keys pressed
         if self.left_pressed and not self.right_pressed:
@@ -530,16 +601,27 @@ class GameWindow(arcade.Window):
         self.clear()
         self.camera.use()
         self.background.draw()
+        self.button_list.draw()
         self.wall_list.draw()
+        self.pushable_objects_list.draw()
         # self.ladder_list.draw()
         self.moving_sprites_list.draw()
         self.bullet_list.draw()
         self.item_list.draw()
         self.player_list.draw()
-        self.end_points.draw()
+
+
+        if self.button1.pressed == False:
+            self.door1.draw()
+        if self.button2.pressed == False:
+            self.door2.draw()
+
+
         self.end_points.draw_hit_boxes()
         self.item_list.draw_hit_boxes()
+        self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
+        self.button_list.draw_hit_boxes()
         # for item in self.player_list:
         #     item.draw_hit_box(arcade.color.RED)
         # for item in self.item_list:
