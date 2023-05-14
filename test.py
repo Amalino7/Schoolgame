@@ -5,6 +5,8 @@ import math
 from typing import Optional
 import arcade
 import os
+
+from arcade.sprite import PyMunk
 SCREEN_TITLE = "PyMunk Platformer"
 
 # How big are our image tiles?
@@ -12,8 +14,7 @@ SPRITE_IMAGE_SIZE = 128
 
 # Scale sprites up or down
 SPRITE_SCALING_PLAYER = 0.5
-SPRITE_SCALING_TILES = 2
-
+SPRITE_SCALING_TILES=2
 # Scaled sprite size for tiles
 SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
 
@@ -131,10 +132,20 @@ class PlayerSprite(arcade.Sprite):
         self.item_list=item_list
         # self.ladder_list = ladder_list
         self.is_on_ladder = False
-
+    # def on_update(self, delta_time):
+        
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
         """ Handle being moved by the pymunk engine """
         # Figure out if we need to face left or right
+        # print("hmm",flush=True)
+        
+        #take a coin alg
+        itemhitlist=arcade.check_for_collision_with_list(self,self.item_list)
+        if len(itemhitlist)>0:
+            if self.is_trying_to_take_object==True:
+                for i in itemhitlist:
+                    i.remove_from_sprite_lists()
+
         if dx < -DEAD_ZONE and self.character_face_direction == RIGHT_FACING:
             self.character_face_direction = LEFT_FACING
         elif dx > DEAD_ZONE and self.character_face_direction == LEFT_FACING:
@@ -175,11 +186,6 @@ class PlayerSprite(arcade.Sprite):
             if self.cur_texture > 7:
                 self.cur_texture = 0
             self.texture = self.walk_textures[self.cur_texture][self.character_face_direction]
-        itemhitlist=arcade.check_for_collision_with_list(self,self.item_list)
-        if len(itemhitlist)>0:
-            if self.is_trying_to_take_object==True:
-                for i in itemhitlist:
-                    i.remove_from_sprite_lists()
 
 class BulletSprite(arcade.SpriteSolidColor):
     """ Bullet Sprite """
@@ -209,6 +215,7 @@ class GameWindow(arcade.Window):
         self.bullet_list: Optional[arcade.SpriteList] = None
         self.item_list: Optional[arcade.SpriteList] = None
         self.moving_sprites_list: Optional[arcade.SpriteList] = None
+        self.end_points: Optional[arcade.SpriteList] = None
         self.ladder_list: Optional[arcade.SpriteList] = None
         self.is_trying_to_take_object: bool=False
         # Track the current state of what key is pressed
@@ -216,13 +223,14 @@ class GameWindow(arcade.Window):
         self.right_pressed: bool = False
         self.up_pressed: bool = False
         self.down_pressed: bool = False
+        self.respawn_index=0
         #add scene
         self.scene: arcade.Scene() = None
         # self.possible_jumps=2
         self.camera=None
         # Physics engine
         self.physics_engine: Optional[arcade.PymunkPhysicsEngine] = None
-
+        self.spawn_point=None
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
 
@@ -248,19 +256,22 @@ class GameWindow(arcade.Window):
         self.wall_list = tile_map.sprite_lists["Platforms"]
         self.item_list = tile_map.sprite_lists["Dynamic Items"]
         self.ladder_list = tile_map.sprite_lists["Ladders"]
-        self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms']
-        self.background = tile_map.sprite_lists['Background']
+        self.moving_sprites_list = tile_map.sprite_lists["Moving Platforms"]
+        self.background = tile_map.sprite_lists["Background"]
+        
+        self.end_points = tile_map.sprite_lists["Despawn"]
+        self.spawn_point = tile_map.object_lists["Spawn"][self.respawn_index]
+        # self.spawn_points = tile_map.get_tilemap_layer("Spawn")#spawn point
         self.camera=arcade.Camera(self.width,self.height)
         # Create player sprite
         self.player_sprite = PlayerSprite(self.item_list, hit_box_algorithm="Detailed")
 
         # Set player location
-        grid_x = 1
-        grid_y = 1
-        # self.player_sprite.center_x=100
-        # self.player_sprite.center_y=100
-        self.player_sprite.center_x = SPRITE_SIZE * grid_x + SPRITE_SIZE / 2
-        self.player_sprite.center_y = SPRITE_SIZE * grid_y + SPRITE_SIZE / 2
+        self.player_sprite.center_x = self.spawn_point.shape[0]
+        self.player_sprite.center_y=self.spawn_point.shape[1]
+        # self.player_sprite.center_x = SPRITE_SIZE * grid_x + SPRITE_SIZE / 2
+        # self.player_sprite.center_y = SPRITE_SIZE * grid_y + SPRITE_SIZE / 2
+
         # Add to player sprite list
         self.player_list.append(self.player_sprite)
 
@@ -276,7 +287,6 @@ class GameWindow(arcade.Window):
 
         # Set the gravity. (0, 0) is good for outer space and top-down.
         gravity = (0, -0)
-
         # Create the physics engine
         self.physics_engine = arcade.PymunkPhysicsEngine(damping=damping,
                                                          gravity=gravity,)
@@ -286,7 +296,12 @@ class GameWindow(arcade.Window):
                 print("shit taken")
         self.physics_engine.add_collision_handler("player1","item",post_handler=item_hit_by_player_handler)
 
-        # self.physics_engine.
+        def reached_end_point(player_sprite, end_sprite, _arbiter, _space, _data):
+            self.respawn_index+=1
+            if self.respawn_index>=2:
+                self.respawn_index=0
+            self.setup()
+        self.physics_engine.add_collision_handler("player1","end",post_handler=reached_end_point)
         def wall_hit_handler(bullet_sprite, _wall_sprite, _arbiter, _space, _data):
             """ Called for bullet/wall collision """
             bullet_sprite.remove_from_sprite_lists()
@@ -310,6 +325,7 @@ class GameWindow(arcade.Window):
         # Friction is between two objects in contact. It is important to remember
         # in top-down games that friction moving along the 'floor' is controlled
         # by damping.
+        self.physics_engine.add_sprite_list(self.end_points,mass=1,collision_type="end")
         self.physics_engine.add_sprite(self.player_sprite,
                                     #    friction=PLAYER_FRICTION,
                                        mass=PLAYER_MASS,
@@ -520,7 +536,8 @@ class GameWindow(arcade.Window):
         self.bullet_list.draw()
         self.item_list.draw()
         self.player_list.draw()
-        
+        self.end_points.draw()
+        self.end_points.draw_hit_boxes()
         self.item_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
         # for item in self.player_list:
