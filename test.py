@@ -5,171 +5,8 @@ import math
 from typing import Optional
 import arcade
 import os
-SCREEN_TITLE = "PyMunk Platformer"
-
-# How big are our image tiles?
-SPRITE_IMAGE_SIZE = 128
-
-# Scale sprites up or down
-SPRITE_SCALING_PLAYER = 0.5
-SPRITE_SCALING_TILES = 2
-
-# Scaled sprite size for tiles
-SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
-
-# Size of grid to show on screen, in number of tiles
-SCREEN_GRID_WIDTH = 25
-SCREEN_GRID_HEIGHT = 15
-
-# Size of screen to show, in pixels
-SCREEN_WIDTH = SPRITE_SIZE * SCREEN_GRID_WIDTH
-SCREEN_HEIGHT = SPRITE_SIZE * SCREEN_GRID_HEIGHT
-
-# --- Physics forces. Higher number, faster accelerating.
-
-
-# Damping - Amount of speed lost per second
-DEFAULT_DAMPING = 0.1
-PLAYER_DAMPING = 0.5
-
-# Friction between objects
-# PLAYER_FRICTION = 1.0
-# WALL_FRICTION = 0.7
-# DYNAMIC_ITEM_FRICTION = 0.6
-
-# Mass (defaults to 1)
-PLAYER_MASS = 2.0
-
-# Keep player from going too fast
-PLAYER_MAX_HORIZONTAL_SPEED = 1950
-PLAYER_MAX_VERTICAL_SPEED = 1950
-
-# Force applied while on the ground
-PLAYER_MOVE_FORCE_ON_GROUND = 1800
-
-# Force applied when moving left/right in the air
-PLAYER_MOVE_FORCE_IN_AIR = 900
-
-# Strength of a jump
-# PLAYER_JUMP_IMPULSE = 1800
-
-# Close enough to not-moving to have the animation go to idle.
-DEAD_ZONE = 0.1
-
-# Constants used to track if the player is facing left or right
-RIGHT_FACING = 0
-LEFT_FACING = 1
-
-# How many pixels to move before we change the texture in the walking animation
-DISTANCE_TO_CHANGE_TEXTURE = 20
-
-# How much force to put on the bullet
-BULLET_MOVE_FORCE = 4500
-
-# Mass of the bullet
-BULLET_MASS = 0.1
-
-# Make bullet less affected by gravity
-BULLET_GRAVITY = 300
-
-
-class PlayerSprite(arcade.Sprite):
-    """ Player Sprite """
-    def __init__(self,
-                 item_list: arcade.SpriteList,
-                 hit_box_algorithm):
-        """ Init """
-        self.physics_engine = Optional[arcade.PymunkPhysicsEngine]
-        # Let parent initialize
-        super().__init__()
-
-        # Set our scale
-        self.scale = SPRITE_SCALING_PLAYER
-        # Images from Kenney.nl's Character pack
-        # main_path = ":resources:images/animated_characters/female_adventurer/femaleAdventurer"
-        # main_path = ":resources:images/animated_characters/female_person/femalePerson"
-        # main_path = ":resources:images/animated_characters/male_person/malePerson"
-        # main_path = ":resources:images/animated_characters/male_adventurer/maleAdventurer"
-        main_path = ":resources:images/animated_characters/zombie/zombie"
-        # main_path = ":resources:images/animated_characters/robot/robot"
-
-        # Load textures for idle standing
-        self.idle_texture_pair = arcade.load_texture_pair(f"{main_path}_idle.png",
-                                                          hit_box_algorithm=hit_box_algorithm)
-        self.jump_texture_pair = arcade.load_texture_pair(f"{main_path}_jump.png")
-        self.fall_texture_pair = arcade.load_texture_pair(f"{main_path}_fall.png")
-
-        # Load textures for walking
-        self.walk_textures = []
-        for i in range(8):
-            texture = arcade.load_texture_pair(f"{main_path}_walk{i}.png")
-            self.walk_textures.append(texture)
-
-        # Load textures for climbing
-        self.climbing_textures = []
-        texture = arcade.load_texture(f"{main_path}_climb0.png")
-        self.climbing_textures.append(texture)
-        texture = arcade.load_texture(f"{main_path}_climb1.png")
-        self.climbing_textures.append(texture)
-
-        # Set the initial texture
-        self.texture = self.idle_texture_pair[0]
-
-        self.is_trying_to_take_object=False
-        # Hit box will be set based on the first image used.
-        self.hit_box = self.texture.hit_box_points
-
-        # Default to face-right
-        self.character_face_direction = RIGHT_FACING
-
-        # Index of our current texture
-        self.cur_texture = 0
-
-        # How far have we traveled horizontally since changing the texture
-        self.x_odometer = 0
-        self.y_odometer = 0
-
-        self.item_list=item_list
-        # self.ladder_list = ladder_list
-        self.is_on_ladder = False
-
-    def pymunk_moved(self, physics_engine, dx, dy, d_angle):
-        """ Handle being moved by the pymunk engine """
-
-        itemhitlist=arcade.check_for_collision_with_list(self,self.item_list)
-        if len(itemhitlist)>0:
-            if self.is_trying_to_take_object==True:
-                for i in itemhitlist:
-                    i.remove_from_sprite_lists()
-
-        # Figure out if we need to face left or right
-        if dx < -DEAD_ZONE and self.character_face_direction == RIGHT_FACING:
-            self.character_face_direction = LEFT_FACING
-        elif dx > DEAD_ZONE and self.character_face_direction == LEFT_FACING:
-            self.character_face_direction = RIGHT_FACING
-
-
-        # Add to the odometer how far we've moved
-        self.x_odometer += dx
-        self.y_odometer += dy
-
-        # Idle animation
-        if abs(dx) <= DEAD_ZONE:
-            self.texture = self.idle_texture_pair[self.character_face_direction]
-            return
-
-        # Have we moved far enough to change the texture?
-        if abs(self.x_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
-
-            # Reset the odometer
-            self.x_odometer = 0
-
-            # Advance the walking animation
-            self.cur_texture += 1
-            if self.cur_texture > 7:
-                self.cur_texture = 0
-            self.texture = self.walk_textures[self.cur_texture][self.character_face_direction]
-
+from Player import *
+from constants import *
 class BulletSprite(arcade.SpriteSolidColor):
     """ Bullet Sprite """
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
@@ -179,16 +16,28 @@ class BulletSprite(arcade.SpriteSolidColor):
             self.remove_from_sprite_lists()
     
 
-class Button(arcade.Sprite):
-    def __init__(self, x, y):
-        super().__init__(
-            ":resources:images/tiles/boxCrate_double.png",
-            center_x=x,
-            center_y=y
-        )
+class Button():
+    def __init__(self, sprite1,sprite2):
+        self.sprite1=sprite1
+        self.sprite2=sprite2
+    # super().__init__(
+    #         ":resources:images/tiles/boxCrate_double.png",
+    #         center_x=x,
+    #         center_y=y
+    #     )
+        self.mainsprite=sprite1
         self.pressed = False
-
-
+def drawButtons(buttonlist):
+    for button in buttonlist:
+        button.mainsprite.draw()
+class Door():
+    def __init__(self,Spritelist):
+        self.spritelist=Spritelist
+        self.state = 0 #closed
+def drawDoors(doorlist):
+    for door in doorlist:
+        if door.state == 0:
+            door.spritelist.draw()
 class GameWindow(arcade.Window):
     """ Main Window """
 
@@ -212,11 +61,9 @@ class GameWindow(arcade.Window):
         self.moving_sprites_list: Optional[arcade.SpriteList] = None
         self.ladder_list: Optional[arcade.SpriteList] = None
         self.pushable_objects_list: Optional[arcade.SpriteList] = None
-        self.door_list: Optional[arcade.SpriteList] = None
+        self.door_list = None
         self.is_trying_to_take_object: bool=False
-
-        self.door_count1 = 0
-        self.door_count2 = 0
+        self.button_list=None
 
         # Track the current state of what key is pressed
         self.left_pressed: bool = False
@@ -238,18 +85,6 @@ class GameWindow(arcade.Window):
 
     def setup(self):
         """ Set up everything with the game """
-
-        # Create the sprite lists
-        self.player_list = arcade.SpriteList()
-        self.bullet_list = arcade.SpriteList()
-
-        self.button1 = Button(1600, 1000)
-        self.button2 = Button(300, 1200)
-
-        self.button_list = arcade.SpriteList()
-        self.button_list.append(self.button1)
-        self.button_list.append(self.button2)
-
         # Map name
         cwd=os.getcwd()
 
@@ -259,7 +94,7 @@ class GameWindow(arcade.Window):
 
         # Load in TileMap
         tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
-
+        
         # Pull the sprite layers out of the tile map
         self.wall_list = tile_map.sprite_lists["Platforms"]
         self.pushable_objects_list = tile_map.sprite_lists["Pushable Items"]
@@ -267,10 +102,40 @@ class GameWindow(arcade.Window):
         self.ladder_list = tile_map.sprite_lists["Ladders"]
         self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms']
         self.background = tile_map.sprite_lists['Background']
-        self.door1 = tile_map.sprite_lists["Door1"]
-        self.door2 = tile_map.sprite_lists["Door2"]
+        self.door_list = []
+        
+        i=0
+        while True:
+            try:
+                self.door_list.append(Door(tile_map.sprite_lists[f"Door{i+1}"]))
+                print("door added",flush=1)
+                i+=1
+            except:
+                break
+
         self.end_points = tile_map.sprite_lists["Despawn"]
         self.spawn_point = tile_map.object_lists["Spawn"][self.respawn_index]
+        self.button_list = []
+        i=0
+        while True:
+            try:
+                for button1,button2 in zip(tile_map.sprite_lists[f"B{i+1}State1"],tile_map.sprite_lists[f"B{i+1}State2"]):
+                    self.button_list.append(Button(button1,button2))
+                print("door added",flush=1)
+                i+=1
+            except:
+                break
+
+        # print(self.button_list,flush=True)
+        # Create the sprite lists
+        self.player_list = arcade.SpriteList()
+        self.bullet_list = arcade.SpriteList()
+
+        # self.button1 = Button(1600, 1000)
+        # self.button2 = Button(300, 1200)
+        # self.button_list.append(self.button1)
+        # self.button_list.append(self.button2)
+
         # self.spawn_points = tile_map.get_tilemap_layer("Spawn")#spawn point
 
         self.camera=arcade.Camera(self.width,self.height)
@@ -366,25 +231,11 @@ class GameWindow(arcade.Window):
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
         
 
-        self.physics_engine.add_sprite_list(self.door1,
+        for door in self.door_list:
+            self.physics_engine.add_sprite_list(door.spritelist,
                                             # friction=WALL_FRICTION,
                                             collision_type="door",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
-        
-        self.physics_engine.add_sprite_list(self.door2,
-                                            # friction=WALL_FRICTION,
-                                            collision_type="door",
-                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
-        
-
-        # Create the items
-        # self.physics_engine.add_sprite_list(self.item_list,
-        #                                     friction=DYNAMIC_ITEM_FRICTION,
-        #                                     mass=1,
-        #                                     # elasticity=1,
-        #                                     body_type=arcade.PymunkPhysicsEngine.DYNAMIC,
-        #                                     collision_type="item")
-
         # Add kinematic sprites
         self.physics_engine.add_sprite_list(self.moving_sprites_list,
                                             body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
@@ -495,42 +346,32 @@ class GameWindow(arcade.Window):
     # Button logic
         for i in self.button_list:
             for j in self.pushable_objects_list:
-                if self.player_sprite.collides_with_sprite(i) or j.collides_with_sprite(i):
+                if self.player_sprite.collides_with_sprite(i.mainsprite) or j.collides_with_sprite(i.mainsprite):
                     i.pressed = True
-                elif not i.collides_with_list(self.pushable_objects_list):
+                    i.mainsprite=i.sprite2
+
+                elif not i.sprite1.collides_with_list(self.pushable_objects_list):
                     i.pressed = False
-        
-        for i in self.button_list:
-            if i.pressed == True:
-                i.texture = arcade.load_texture(
-                ":resources:images/items/coinGold.png")
-            else:
-                i.texture = arcade.load_texture(
-                ":resources:images/tiles/boxCrate_double.png")
+                    i.mainsprite=i.sprite1
 
 
         # Door/Button logic
-        if self.button1.pressed == False and self.door_count1 == 2:
-            self.door_count1 = 0
-            self.physics_engine.add_sprite_list(self.door1,
+        """dswfisdjslfjsofls"""
+        for i in self.button_list:
+            try:
+                curdoor=self.door_list[self.button_list.index(i)]
+            except:
+                continue
+            if i.pressed == False and curdoor.state == 1:
+                curdoor.state = 0
+                self.physics_engine.add_sprite_list(curdoor.spritelist,
                                                 # friction=WALL_FRICTION,
                                                 collision_type="door",
                                                 body_type=arcade.PymunkPhysicsEngine.STATIC)
-        elif self.button1.pressed == True and self.door_count1 < 2:
-            for i in self.door1:
-                self.door_count1 += 1
-                self.physics_engine.remove_sprite(i)
-        
-        if self.button2.pressed == False and self.door_count2 == 4:
-            self.door_count2 = 0
-            self.physics_engine.add_sprite_list(self.door2,
-                                                # friction=WALL_FRICTION,
-                                                collision_type="door",
-                                                body_type=arcade.PymunkPhysicsEngine.STATIC)
-        elif self.button2.pressed == True and self.door_count2 < 4:
-            for i in self.door2:
-                self.door_count2 += 1
-                self.physics_engine.remove_sprite(i)
+            elif i.pressed == True and curdoor.state == 0:
+               curdoor.state = 1
+               for sprite in curdoor.spritelist:
+                self.physics_engine.remove_sprite(sprite)
 
 
         # is_on_ground = self.physics_engine.is_on_ground(self.player_sprite)
@@ -601,7 +442,7 @@ class GameWindow(arcade.Window):
         self.clear()
         self.camera.use()
         self.background.draw()
-        self.button_list.draw()
+        drawButtons(self.button_list)
         self.wall_list.draw()
         self.pushable_objects_list.draw()
         # self.ladder_list.draw()
@@ -610,23 +451,11 @@ class GameWindow(arcade.Window):
         self.item_list.draw()
         self.player_list.draw()
 
-
-        if self.button1.pressed == False:
-            self.door1.draw()
-        if self.button2.pressed == False:
-            self.door2.draw()
-
-
         self.end_points.draw_hit_boxes()
         self.item_list.draw_hit_boxes()
         self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
-        self.button_list.draw_hit_boxes()
-        # for item in self.player_list:
-        #     item.draw_hit_box(arcade.color.RED)
-        # for item in self.item_list:
-        #     item.draw_hit_box(arcade.color.RED)
-
+        drawDoors(self.door_list)
 def main():
     """ Main function """
     window = GameWindow(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
