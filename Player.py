@@ -60,6 +60,7 @@ class PlayerSprite(arcade.Sprite):
         self.item_list=item_list
         # self.ladder_list = ladder_list
         self.is_on_ladder = False
+        self.score = 0
 
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
         """ Handle being moved by the pymunk engine """
@@ -68,6 +69,7 @@ class PlayerSprite(arcade.Sprite):
         if len(itemhitlist)>0:
             if self.is_trying_to_take_object==True:
                 for i in itemhitlist:
+                    self.score+=10
                     i.remove_from_sprite_lists()
 
         # Figure out if we need to face left or right

@@ -7,6 +7,7 @@ import arcade
 import os
 from Player import *
 from constants import *
+
 class BulletSprite(arcade.SpriteSolidColor):
     """ Bullet Sprite """
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
@@ -38,6 +39,9 @@ def drawDoors(doorlist):
     for door in doorlist:
         if door.state == 0:
             door.spritelist.draw()
+
+class Money(arcade.Sprite):
+    value = 30
 class GameWindow(arcade.Window):
     """ Main Window """
 
@@ -46,7 +50,7 @@ class GameWindow(arcade.Window):
 
         # Init the parent class
         super().__init__(width, height, title)
-
+        self.set_fullscreen()
         # Player sprite
         self.player_sprite: Optional[PlayerSprite] = None
         self.level = 1 #level
@@ -64,7 +68,7 @@ class GameWindow(arcade.Window):
         self.door_list = None
         self.is_trying_to_take_object: bool=False
         self.button_list=None
-
+        self.gui_camera = None
         # Track the current state of what key is pressed
         self.left_pressed: bool = False
         self.right_pressed: bool = False
@@ -78,7 +82,8 @@ class GameWindow(arcade.Window):
         # Physics engine
         self.physics_engine: Optional[arcade.PymunkPhysicsEngine] = None
         self.spawn_point=None
-
+        self.player_sprite_old=None
+        self.mode = 0 #shoot
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
 
@@ -86,8 +91,9 @@ class GameWindow(arcade.Window):
     def setup(self):
         """ Set up everything with the game """
         # Map name
+        file_path = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(file_path)
         cwd=os.getcwd()
-
         map_name = f"{cwd}\TIledproject\hmm.json"
         map_name = r'{}'.format(map_name)
         # map_name = ":resources:/tiled_maps/pymunk_test_map.json"
@@ -139,6 +145,7 @@ class GameWindow(arcade.Window):
         # self.spawn_points = tile_map.get_tilemap_layer("Spawn")#spawn point
 
         self.camera=arcade.Camera(self.width,self.height)
+        self.gui_camera = arcade.Camera(self.width, self.height)
         # Create player sprite
         self.player_sprite = PlayerSprite(self.item_list, hit_box_algorithm="Detailed")
 
@@ -169,6 +176,7 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_sprite_list(self.pushable_objects_list,
                                             friction=0.7,
                                             collision_type="push",
+                                            moment_of_intertia=arcade.PymunkPhysicsEngine.MOMENT_INF,
                                             body_type=arcade.PymunkPhysicsEngine.DYNAMIC)
 
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
@@ -190,6 +198,14 @@ class GameWindow(arcade.Window):
             bullet_sprite.remove_from_sprite_lists()
 
         self.physics_engine.add_collision_handler("bullet", "wall", post_handler=wall_hit_handler)
+        self.physics_engine.add_collision_handler("bullet", "end", post_handler=wall_hit_handler)
+
+        def push_hit_handler(bullet_sprite, push_sprite, _arbiter, _space, _data):
+            if self.mode == 1:
+                self.player_sprite_old = self.player_sprite
+                self.player_sprite = push_sprite   
+            bullet_sprite.remove_from_sprite_lists()
+        self.physics_engine.add_collision_handler("bullet", "push", post_handler=push_hit_handler)
 
         def item_hit_handler(bullet_sprite, item_sprite, _arbiter, _space, _data):
             """ Called for bullet/wall collision """
@@ -208,7 +224,7 @@ class GameWindow(arcade.Window):
         # Friction is between two objects in contact. It is important to remember
         # in top-down games that friction moving along the 'floor' is controlled
         # by damping.
-        self.physics_engine.add_sprite_list(self.end_points,mass=1,collision_type="end")
+        self.physics_engine.add_sprite_list(self.end_points,mass=1,collision_type="end", body_type = arcade.PymunkPhysicsEngine.STATIC)
         self.physics_engine.add_sprite(self.player_sprite,
                                     #    friction=PLAYER_FRICTION,
                                        mass=PLAYER_MASS,
@@ -234,7 +250,7 @@ class GameWindow(arcade.Window):
         for door in self.door_list:
             self.physics_engine.add_sprite_list(door.spritelist,
                                             # friction=WALL_FRICTION,
-                                            collision_type="door",
+                                            collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
         # Add kinematic sprites
         self.physics_engine.add_sprite_list(self.moving_sprites_list,
@@ -270,6 +286,15 @@ class GameWindow(arcade.Window):
         elif key == arcade.key.DOWN:
             self.down_pressed = True
 
+
+        if key == arcade.key.Q:
+            if self.mode == 0:
+                self.mode = 1
+            else:
+                self.mode = 0
+
+        if key == arcade.key.ESCAPE and self.mode == 1:
+            self.player_sprite=self.player_sprite_old
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
         if key == arcade.key.E:
@@ -293,8 +318,6 @@ class GameWindow(arcade.Window):
         # Position the bullet at the player's current location
         start_x = self.player_sprite.center_x
         start_y = self.player_sprite.center_y
-        print("player pos_x",start_x)
-        print("player pos_y",start_y)
         bullet.position = self.player_sprite.position
 
         # Get from the mouse the destination location for the bullet
@@ -302,8 +325,7 @@ class GameWindow(arcade.Window):
         # to add in self.view_bottom and self.view_left.
         dest_x = x+self.camera.position.x
         dest_y = y+self.camera.position.y
-        print("click x",dest_x)
-        print("click y",dest_y)
+        
         # Do math to calculate how to get the bullet to the destination.
         # Calculation the angle in radians between the start points
         # and end points. This is the angle the bullet will travel.
@@ -366,7 +388,7 @@ class GameWindow(arcade.Window):
                 curdoor.state = 0
                 self.physics_engine.add_sprite_list(curdoor.spritelist,
                                                 # friction=WALL_FRICTION,
-                                                collision_type="door",
+                                                collision_type="wall",
                                                 body_type=arcade.PymunkPhysicsEngine.STATIC)
             elif i.pressed == True and curdoor.state == 0:
                curdoor.state = 1
@@ -456,9 +478,29 @@ class GameWindow(arcade.Window):
         self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
         drawDoors(self.door_list)
+
+        self.gui_camera.use()
+        try:
+            score_text = f"Score: {self.player_sprite.score} Mode is {self.mode}"
+            arcade.draw_text(
+                score_text,
+                0,
+                0,
+                arcade.csscolor.WHITE,
+                18,
+            )
+        except:
+            score_text = f"Score: {self.player_sprite_old.score} Mode is {self.mode}"
+            arcade.draw_text(
+                score_text,
+                0,
+                0,
+                arcade.csscolor.WHITE,
+                18,
+            )
 def main():
     """ Main function """
-    window = GameWindow(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window = GameWindow(SCREEN_WIDTH-30, SCREEN_HEIGHT-30, SCREEN_TITLE)
     window.setup()
     arcade.run()
 
