@@ -84,6 +84,7 @@ class GameWindow(arcade.Window):
         self.spawn_point=None
         self.player_sprite_old=None
         self.mode = 0 #shoot
+        self.impersonating = False
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
 
@@ -204,6 +205,7 @@ class GameWindow(arcade.Window):
             if self.mode == 1:
                 self.player_sprite_old = self.player_sprite
                 self.player_sprite = push_sprite   
+                self.impersonating = True
             bullet_sprite.remove_from_sprite_lists()
         self.physics_engine.add_collision_handler("bullet", "push", post_handler=push_hit_handler)
 
@@ -311,7 +313,8 @@ class GameWindow(arcade.Window):
 
     def on_mouse_press(self, x, y, button, modifiers):
         """ Called whenever the mouse button is clicked. """
-
+        if self.impersonating == True:
+            return
         bullet = BulletSprite(20, 5, arcade.color.LIGHT_BLUE)
         self.bullet_list.append(bullet)
 
@@ -480,24 +483,17 @@ class GameWindow(arcade.Window):
         drawDoors(self.door_list)
 
         self.gui_camera.use()
-        try:
-            score_text = f"Score: {self.player_sprite.score} Mode is {self.mode}"
-            arcade.draw_text(
-                score_text,
-                0,
-                0,
-                arcade.csscolor.WHITE,
-                18,
-            )
-        except:
+        if self.impersonating == True:
             score_text = f"Score: {self.player_sprite_old.score} Mode is {self.mode}"
-            arcade.draw_text(
-                score_text,
-                0,
-                0,
-                arcade.csscolor.WHITE,
-                18,
-            )
+        else:
+            score_text = f"Score: {self.player_sprite.score} Mode is {self.mode}"
+        arcade.draw_text(
+            score_text,
+            30,
+            50,
+            arcade.csscolor.WHITE,
+            18,
+       )
 def main():
     """ Main function """
     window = GameWindow(SCREEN_WIDTH-30, SCREEN_HEIGHT-30, SCREEN_TITLE)
