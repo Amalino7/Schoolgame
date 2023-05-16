@@ -81,8 +81,9 @@ class GameWindow(arcade.Window):
         self.camera=None
         # Physics engine
         self.physics_engine: Optional[arcade.PymunkPhysicsEngine] = None
-        self.spawn_point=None
+        self.respawn_point=None
         self.player_sprite_old=None
+        self.spawn_points=None
         self.mode = 0 #shoot
         self.impersonating = False
         # Set background color
@@ -110,7 +111,7 @@ class GameWindow(arcade.Window):
         self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms']
         self.background = tile_map.sprite_lists['Background']
         self.door_list = []
-        
+        self.spawn_points = tile_map.object_lists["Spawn"]
         i=0
         while True:
             try:
@@ -121,7 +122,7 @@ class GameWindow(arcade.Window):
                 break
 
         self.end_points = tile_map.sprite_lists["Despawn"]
-        self.spawn_point = tile_map.object_lists["Spawn"][self.respawn_index]
+        self.respawn_point = self.spawn_points[self.respawn_index]
         self.button_list = []
         i=0
         while True:
@@ -152,8 +153,8 @@ class GameWindow(arcade.Window):
 
         # Set player location
         
-        self.player_sprite.center_x = self.spawn_point.shape[0]
-        self.player_sprite.center_y=self.spawn_point.shape[1]
+        self.player_sprite.center_x = self.respawn_point.shape[0]
+        self.player_sprite.center_y=self.respawn_point.shape[1]
         # Add to player sprite list
         self.player_list.append(self.player_sprite)
 
@@ -187,9 +188,6 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_collision_handler("player1","item",post_handler=item_hit_by_player_handler)
 
         def reached_end_point(player_sprite, end_sprite, _arbiter, _space, _data):
-            self.respawn_index+=1
-            if self.respawn_index>=2:
-                self.respawn_index=0
             self.setup()
         self.physics_engine.add_collision_handler("player1","end",post_handler=reached_end_point)
 
@@ -275,6 +273,11 @@ class GameWindow(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
+
+        if key == arcade.key.T:
+            for point in self.spawn_points:
+                if self.player_sprite.collides_with_point(point.shape):
+                    self.respawn_index = self.spawn_points.index(point)
         if key == arcade.key.E:
             self.player_sprite.is_trying_to_take_object=True
             self.is_trying_to_take_object=True
@@ -484,9 +487,9 @@ class GameWindow(arcade.Window):
 
         self.gui_camera.use()
         if self.impersonating == True:
-            score_text = f"Score: {self.player_sprite_old.score} Mode is {self.mode}"
+            score_text = f"Score: {self.player_sprite_old.score} Mode is {self.mode} Respawn:{self.respawn_index}"
         else:
-            score_text = f"Score: {self.player_sprite.score} Mode is {self.mode}"
+            score_text = f"Score: {self.player_sprite.score} Mode is {self.mode} Respawn:{self.respawn_index}"
         arcade.draw_text(
             score_text,
             30,

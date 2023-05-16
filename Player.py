@@ -4,8 +4,9 @@ from typing import Optional
 class PlayerSprite(arcade.Sprite):
     """ Player Sprite """
     def __init__(self,
-                 item_list: arcade.SpriteList,
-                 hit_box_algorithm):
+                item_list: arcade.SpriteList,
+                
+                hit_box_algorithm):
         """ Init """
         self.physics_engine = Optional[arcade.PymunkPhysicsEngine]
         # Let parent initialize
