@@ -7,6 +7,7 @@ import arcade
 import os
 from Player import *
 from constants import *
+import random
 
 class BulletSprite(arcade.SpriteSolidColor):
     """ Bullet Sprite """
@@ -404,35 +405,33 @@ class GameWindow(arcade.Window):
 
         # is_on_ground = self.physics_engine.is_on_ground(self.player_sprite)
         # Update player forces based on keys pressed
+        force=[0,0]
+        tmp_friction = 1
         if self.left_pressed and not self.right_pressed:
-            force = (-PLAYER_MOVE_FORCE_ON_GROUND, 0)
-            self.physics_engine.apply_force(self.player_sprite, force)
-            # Set friction to zero for the player while moving
-            self.physics_engine.set_friction(self.player_sprite, 0)
+            force[0] = -PLAYER_MOVE_FORCE_ON_GROUND
+            tmp_friction = 0
         elif self.right_pressed and not self.left_pressed:
-            # Create a force to the right. Apply it.
-            force = (PLAYER_MOVE_FORCE_ON_GROUND, 0)
-            self.physics_engine.apply_force(self.player_sprite, force)
-            # Set friction to zero for the player while moving
-        else:
-            # Player's feet are not moving. Therefore up the friction so we stop.
-            self.physics_engine.set_friction(self.player_sprite, 1.0)
-            
+            force[0] = PLAYER_MOVE_FORCE_ON_GROUND
+            tmp_friction = 0
         if self.up_pressed and not self.down_pressed:
-            force = (0, PLAYER_MOVE_FORCE_ON_GROUND)
-            self.physics_engine.apply_force(self.player_sprite, force)
-            # Set friction to zero for the player while moving
-            self.physics_engine.set_friction(self.player_sprite, 0)
+            force[1] = PLAYER_MOVE_FORCE_ON_GROUND
+            tmp_friction = 0
         elif self.down_pressed and not self.up_pressed:
-            force = (0, -PLAYER_MOVE_FORCE_ON_GROUND)
-            self.physics_engine.apply_force(self.player_sprite, force)
-            # Set friction to zero for the player while moving
-            self.physics_engine.set_friction(self.player_sprite, 0)
-
-        else:
-            # Player's feet are not moving. Therefore up the friction so we stop.
-            self.physics_engine.set_friction(self.player_sprite, 1.0)
-
+            force[1] = -PLAYER_MOVE_FORCE_ON_GROUND
+            tmp_friction = 0
+        if self.impersonating == True:
+            force[0]/=3 #lower Movement
+            force[1]/=3
+            
+            x_offset = 0
+            y_offset = 0    
+            x_offset = random.randrange(-PLAYER_MOVE_FORCE_ON_GROUND,PLAYER_MOVE_FORCE_ON_GROUND,1)
+            y_offset = random.randrange(-PLAYER_MOVE_FORCE_ON_GROUND,PLAYER_MOVE_FORCE_ON_GROUND,1)
+            force[0]+= x_offset
+            force[1]+= y_offset
+        self.physics_engine.set_friction(self.player_sprite, tmp_friction)
+        force=tuple(force)
+        self.physics_engine.apply_force(self.player_sprite, force)#apply all the force
         # Move items in the physics engine
         self.physics_engine.step()
 
