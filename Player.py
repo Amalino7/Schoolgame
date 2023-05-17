@@ -5,7 +5,6 @@ class PlayerSprite(arcade.Sprite):
     """ Player Sprite """
     def __init__(self,
                 item_list: arcade.SpriteList,
-                
                 hit_box_algorithm):
         """ Init """
         self.physics_engine = Optional[arcade.PymunkPhysicsEngine]
@@ -14,43 +13,29 @@ class PlayerSprite(arcade.Sprite):
 
         # Set our scale
         self.scale = SPRITE_SCALING_PLAYER
-        # Images from Kenney.nl's Character pack
-        # main_path = ":resources:images/animated_characters/female_adventurer/femaleAdventurer"
-        # main_path = ":resources:images/animated_characters/female_person/femalePerson"
-        # main_path = ":resources:images/animated_characters/male_person/malePerson"
-        # main_path = ":resources:images/animated_characters/male_adventurer/maleAdventurer"
-        main_path = ":resources:images/animated_characters/zombie/zombie"
-        # main_path = ":resources:images/animated_characters/robot/robot"
-
-        # Load textures for idle standing
-        self.idle_texture_pair = arcade.load_texture_pair(f"{main_path}_idle.png",
-                                                          hit_box_algorithm=hit_box_algorithm)
-        self.jump_texture_pair = arcade.load_texture_pair(f"{main_path}_jump.png")
-        self.fall_texture_pair = arcade.load_texture_pair(f"{main_path}_fall.png")
-
-        # Load textures for walking
-        self.walk_textures = []
-        for i in range(8):
-            texture = arcade.load_texture_pair(f"{main_path}_walk{i}.png")
-            self.walk_textures.append(texture)
-
-        # Load textures for climbing
-        self.climbing_textures = []
-        texture = arcade.load_texture(f"{main_path}_climb0.png")
-        self.climbing_textures.append(texture)
-        texture = arcade.load_texture(f"{main_path}_climb1.png")
-        self.climbing_textures.append(texture)
+        main_path = "other_assets\magus\magus"
+        
+        self.front_texture_list=[]
+        self.back_texture_list=[]
+        self.left_texture_list=[]
+        self.right_texture_list=[]
+        # Load textures for idle standing\
+        for i in range(1,3):
+            self.front_texture_list.append(arcade.load_texture(f"{main_path}_front_{i}.png",hit_box_algorithm=hit_box_algorithm))
+            self.back_texture_list.append(arcade.load_texture(f"{main_path}_back_{i}.png"))
+            self.left_texture_list.append(arcade.load_texture(f"{main_path}_left_{i}.png"))
+            self.right_texture_list.append(arcade.load_texture(f"{main_path}_right_{i}.png"))
 
         # Set the initial texture
-        self.texture = self.idle_texture_pair[0]
+        self.texture = self.front_texture_list[0]
 
         self.is_trying_to_take_object=False
         # Hit box will be set based on the first image used.
         self.hit_box = self.texture.hit_box_points
 
         # Default to face-right
-        self.character_face_direction = RIGHT_FACING
-
+        self.character_face_direction_1 = RIGHT_FACING
+        self.character_face_direction_2 = FRONT_FACING
         # Index of our current texture
         self.cur_texture = 0
 
@@ -74,29 +59,48 @@ class PlayerSprite(arcade.Sprite):
                     i.remove_from_sprite_lists()
 
         # Figure out if we need to face left or right
-        if dx < -DEAD_ZONE and self.character_face_direction == RIGHT_FACING:
-            self.character_face_direction = LEFT_FACING
-        elif dx > DEAD_ZONE and self.character_face_direction == LEFT_FACING:
-            self.character_face_direction = RIGHT_FACING
+        #Reminder fix this bs later
+        if dx < -DEAD_ZONE and self.character_face_direction_1 == RIGHT_FACING:
+            self.character_face_direction_1 = LEFT_FACING
+        elif dx > DEAD_ZONE and self.character_face_direction_1 == LEFT_FACING:
+            self.character_face_direction_1 = RIGHT_FACING
 
-
+        if dy > DEAD_ZONE and self.character_face_direction_2 == FRONT_FACING:
+            self.character_face_direction_2 = BACK_FACING
+        elif dy < -DEAD_ZONE and self.character_face_direction_2 == BACK_FACING:
+            self.character_face_direction_2 = FRONT_FACING
         # Add to the odometer how far we've moved
         self.x_odometer += dx
         self.y_odometer += dy
 
         # Idle animation
-        if abs(dx) <= DEAD_ZONE:
-            self.texture = self.idle_texture_pair[self.character_face_direction]
+        if abs(dx) <= DEAD_ZONE and abs(dy) <= DEAD_ZONE:
+            self.texture = self.front_texture_list[0]
             return
-
         # Have we moved far enough to change the texture?
-        if abs(self.x_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
-
+        if abs(dx)>abs(dy):
+            if abs(self.x_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
             # Reset the odometer
-            self.x_odometer = 0
+                self.x_odometer = 0
 
-            # Advance the walking animation
-            self.cur_texture += 1
-            if self.cur_texture > 7:
-                self.cur_texture = 0
-            self.texture = self.walk_textures[self.cur_texture][self.character_face_direction]
+                # Advance the walking animation
+                self.cur_texture += 1
+                if self.cur_texture > 1:
+                    self.cur_texture = 0
+                if self.character_face_direction_1 == LEFT_FACING:
+                    self.texture = self.left_texture_list[self.cur_texture]
+                elif self.character_face_direction_1 == RIGHT_FACING:
+                    self.texture = self.right_texture_list[self.cur_texture]
+        elif abs(dy)>abs(dx):
+            if abs(self.y_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
+                self.y_odometer = 0
+
+                # Advance the walking animation
+                self.cur_texture += 1
+                if self.cur_texture > 1:
+                    self.cur_texture = 0
+                
+                if self.character_face_direction_2 == FRONT_FACING:
+                    self.texture = self.front_texture_list[self.cur_texture]
+                elif self.character_face_direction_2 == BACK_FACING:
+                    self.texture = self.back_texture_list[self.cur_texture]
