@@ -92,6 +92,8 @@ class GameWindow(arcade.Window):
 
 
     def setup(self):
+        self.impersonating = False
+        
         """ Set up everything with the game """
         # Map name
         file_path = os.path.dirname(os.path.abspath(__file__))
@@ -300,7 +302,8 @@ class GameWindow(arcade.Window):
                 self.mode = 0
 
         if key == arcade.key.ESCAPE and self.mode == 1:
-            self.player_sprite=self.player_sprite_old
+            self.player_sprite = self.player_sprite_old
+            self.impersonating = False
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
         if key == arcade.key.E:
