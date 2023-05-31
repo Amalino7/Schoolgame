@@ -326,6 +326,7 @@ class GameWindow(arcade.Window):
         # self.button_list.append(self.button1)
         # self.button_list.append(self.button2)
 
+        """тесткдфхзсофлдкй"""
         # self.spawn_points = tile_map.get_tilemap_layer("Spawn")#spawn point
 
         self.camera=arcade.Camera(self.width,self.height)
