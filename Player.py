@@ -19,6 +19,7 @@ class PlayerSprite(arcade.Sprite):
         self.back_texture_list=[]
         self.left_texture_list=[]
         self.right_texture_list=[]
+        self.HP = 10
         # Load textures for idle standing\
         for i in range(1,3):
             self.front_texture_list.append(arcade.load_texture(f"{main_path}_front_{i}.png",hit_box_algorithm=hit_box_algorithm))
@@ -50,7 +51,6 @@ class PlayerSprite(arcade.Sprite):
 
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
         """ Handle being moved by the pymunk engine """
-
         itemhitlist=arcade.check_for_collision_with_list(self,self.item_list)
         if len(itemhitlist)>0:
             if self.is_trying_to_take_object==True:

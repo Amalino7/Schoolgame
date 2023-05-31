@@ -11,74 +11,177 @@ from Player import *
 from constants import *
 import random
 
+
+
 class Friend(arcade.Sprite):
-    """
-    This class represents the coins on our screen. It is a child class of
-    the arcade library's "Sprite" class.
-    """
-
-    def follow_sprite(self, player_sprite):
-        """
-        This function will move the current sprite towards whatever
-        other sprite is specified as a parameter.
-
-        We use the 'min' function here to get the sprite to line up with
-        the target sprite, and not jump around if the sprite is not off
-        an exact multiple of SPRITE_SPEED.
-        """
-        force =[0,0]
-        if self.center_y < player_sprite.center_y:
-            force[1]=min(FOLLOWER_SPEED, player_sprite.center_y - self.center_y)
-        elif self.center_y > player_sprite.center_y:
-            force[1]=-min(FOLLOWER_SPEED, self.center_y - player_sprite.center_y)
-
-        if self.center_x < player_sprite.center_x:
-            force[0]=min(FOLLOWER_SPEED, player_sprite.center_x - self.center_x)
-        elif self.center_x > player_sprite.center_x:
-            force[0]=- min(FOLLOWER_SPEED, self.center_x - player_sprite.center_x)
+    """friend that will follow us arround """
+    def __init__(self, image, scale, wall_list,player_sprite):
+        super().__init__(image, scale)
+        self.barrier_list = arcade.AStarBarrierList(self, wall_list, 31, -2000, 5000, -2000, 2000)
+        self.path = None
+        self.player_sprite = player_sprite
+        self.cur_mode = 1
+        self.time_passed=0
+       
+    def on_update(self, delta_time: float = 1/60):
+        self.update_path(self.player_sprite,delta_time)
+        self.time_passed+=delta_time
         
-        return tuple(force)
-class BulletSprite(arcade.SpriteSolidColor):
-    """ Bullet Sprite """
-    def __init__(self, width: int, height: int, color: Color, player_sprite):
-        self.player_sprite=player_sprite
-        super().__init__(width, height, color)
-    dist=0
+    def update_path(self, player_sprite,delta_time):
+        self.path = arcade.astar_calculate_path(self.position, player_sprite.position, self.barrier_list, diagonal_movement=True)
+
+        # Move to next point on path. Using min to avoid overshooting
+        if self.path and len(self.path) > 1:
+            if self.center_y < self.path[1][1]:
+                self.center_y += min(SPRITE_SPEED, self.path[1][1] - self.center_y)
+            elif self.center_y > self.path[1][1]:
+                self.center_y -= min(SPRITE_SPEED, self.center_y - self.path[1][1])
+            
+            if self.center_x < self.path[1][0]:
+                self.center_x += min(SPRITE_SPEED, self.path[1][0] - self.center_x)
+            elif self.center_x > self.path[1][0]:
+                self.center_x -= min(SPRITE_SPEED, self.center_x - self.path[1][0])
     
-    def pymunk_moved(self, physics_engine, dx, dy, d_angle):
+class Path_finding_enemy(arcade.Sprite):
+    def __init__(self, image, scale,player_sprite,wall_list,path):
+        self.wall_list=wall_list
+        super().__init__(image, scale)
+        """proces path so it scales right"""
+        self.static_path = []
+        for i in path:
+            lista =[]
+            for cord in i:
+                cord*=SPRITE_SCALING_TILES
+                lista.append(cord)
+            self.static_path.append(tuple(lista))
+        
+        self.center_x = self.static_path[0][0]
+        self.center_y = self.static_path[0][1]
+        self.cur_dir=1
+        self.player_sprite:Optional[PlayerSprite]=player_sprite
+        self.barrier_list = arcade.AStarBarrierList(self, wall_list, 31, -5000, 15000, -5000, 5000)
+        self.time_in_sight = 0
+        self.hp = 10
+        self.attack_cooldown=0
+    
+    def on_update(self,physic_engine:Optional[arcade.PymunkPhysicsEngine],delta_time,bullet_list):
+        self.attack_cooldown-=delta_time
+        if arcade.has_line_of_sight(self.position,self.player_sprite.position,self.wall_list,1000):
+            if self.time_in_sight>TIME_TO_SEE:
+                physic_engine.set_velocity(self,self.follow_sprite(delta_time))
+                
+                if self.attack_cooldown<=0:
+                    self.attack_cooldown=1
+                    print("trying to shoot",flush=True)
+                    bullet = BulletSprite(":resources:images/space_shooter/laserBlue01.png",self,
+                              self.player_sprite.center_x,
+                                    self.player_sprite.center_y,
+                                    "enemy")
+                    bullet_list.append(bullet)
+                    physic_engine.add_sprite(bullet,
+                                       mass=BULLET_MASS,
+                                       damping=1,
+                                       collision_type="bullet",
+                                       gravity=(0,0),
+                                       elasticity=0.9)
+                    # Add force to bullet
+                    force = (BULLET_MOVE_FORCE, 0)
+                    physic_engine.apply_force(bullet, force)
+            else:
+                self.update_path(delta_time)
+                self.time_in_sight+=delta_time
+        else:
+            self.time_in_sight-=delta_time
+            if self.time_in_sight<0:
+                self.time_in_sight = 0
+            physic_engine.set_velocity(self,self.update_path(delta_time))
+
+    def update_path(self, delta_time):
+        force = [0,0]
+        # Move to next point on path. Using min to avoid overshooting
+        if self.cur_dir >= len(self.static_path):
+            self.cur_dir = 1
+        if self.center_y < self.static_path[self.cur_dir][1]:
+            force[1] += min(SPRITE_SPEED, self.static_path[self.cur_dir][1] - self.center_y)
+            # print(self.center_y,self.path[self.cur_dir][0],self.path[self.cur_dir][0],flush=True)
+        elif self.center_y > self.static_path[self.cur_dir][1]:
+            force[1] -= min(SPRITE_SPEED, self.center_y - self.static_path[self.cur_dir][1])
+
+        if self.center_x <= self.static_path[self.cur_dir][0]:
+            force[0] += min(SPRITE_SPEED, self.static_path[self.cur_dir][0] - self.center_x)
+        elif self.center_x > self.static_path[self.cur_dir][0]:
+            force[0] -= min(SPRITE_SPEED, self.center_x - self.static_path[self.cur_dir][0])
+
+        force[0]*=FORCE_MULTIPLR
+        force[1]*=FORCE_MULTIPLR
+
+        """ Debug tool """
+        # print(self.center_x ,self.center_y,self.static_path[self.cur_dir][0],self.static_path[self.cur_dir][1],flush=True) 
+        if int(self.center_x) == int(self.static_path[self.cur_dir][0]) and int(self.center_y) == int(self.static_path[self.cur_dir][1]):
+            self.cur_dir+=1
+
+        return tuple(force)
+    def follow_sprite(self,delta_time):
+
+        force = [0,0]
+        if self.center_y < self.player_sprite.center_y:
+            force[1]=min(SPRITE_SPEED, self.player_sprite.center_y - self.center_y)
+        elif self.center_y > self.player_sprite.center_y:
+            force[1]=-min(SPRITE_SPEED, self.center_y - self.player_sprite.center_y)
+
+        if self.center_x < self.player_sprite.center_x:
+            force[0]=min(SPRITE_SPEED, self.player_sprite.center_x - self.center_x)
+        elif self.center_x > self.player_sprite.center_x:
+            force[0]=- min(SPRITE_SPEED, self.center_x - self.player_sprite.center_x)
+
+        force[0]*=FORCE_MULTIPLR
+        force[1]*=FORCE_MULTIPLR
+        return tuple(force)
+
+
+
+class BulletSprite(arcade.Sprite):
+    """ Bullet Sprite """
+    def __init__(self, image, player_sprite,direction_x,direction_y,mode):
+        self.player_sprite=player_sprite
+        self.dist=0
+        self.mode =mode
+        #"enemy"
+        #"player"
+        #"impersonate"
+        super().__init__(filename=image)
+        # Position the bullet at the player's current location
+        start_x = self.player_sprite.center_x
+        start_y = self.player_sprite.center_y
+        self.position = self.player_sprite.position
+
+        # Get from the mouse the destination location for the bullet
+        # IMPORTANT! If you have a scrolling screen, you will also need
+        # to add in self.view_bottom and self.view_left.
+        dest_x = direction_x
+        dest_y = direction_y
+        
+        # Do math to calculate how to get the bullet to the destination.
+        # Calculation the angle in radians between the start points
+        # and end points. This is the angle the bullet will travel.
+        x_diff = dest_x - start_x
+        y_diff = dest_y - start_y
+        angle = math.atan2(y_diff, x_diff)
+
+        # What is the 1/2 size of this sprite, so we can figure out how far
+        # away to spawn the bullet
+        size = max(self.player_sprite.width, self.player_sprite.height) / 2
+
+        # Use angle to to spawn bullet away from player in proper direction
+        self.center_x += size * math.cos(angle)
+        self.center_y += size * math.sin(angle)
+
+        # Set angle of bullet
+        self.angle = math.degrees(angle)
+    
+    def pymunk_moved(self, physics_engine:arcade.PymunkPhysicsEngine, dx, dy, d_angle):
         """ Handle when the sprite is moved by the physics engine. """
         # If the bullet falls below the screen, remove it
-        if self.center_y < -100:
-            self.remove_from_sprite_lists()
-        dist=dx+dy
-        if dist >= DIST_UNTIL_BACKFIRE:
-            physics_engine.apply_force(self,
-                                        self.follow_sprite(self.player_sprite)#force needed to move
-                                        )
-        
-    def follow_sprite(self, player_sprite):
-        """
-        This function will move the current sprite towards whatever
-        other sprite is specified as a parameter.
-
-        We use the 'min' function here to get the sprite to line up with
-        the target sprite, and not jump around if the sprite is not off
-        an exact multiple of SPRITE_SPEED.
-        """
-        force =[0,0]
-        if self.center_y < player_sprite.center_y:
-            force[1]=min(BULLET_MOVE_FORCE, player_sprite.center_y - self.center_y)
-        elif self.center_y > player_sprite.center_y:
-            force[1]=-min(BULLET_MOVE_FORCE, self.center_y - player_sprite.center_y)
-
-        if self.center_x < player_sprite.center_x:
-            force[0]=min(BULLET_MOVE_FORCE, player_sprite.center_x - self.center_x)
-        elif self.center_x > player_sprite.center_x:
-            force[0]=- min(BULLET_MOVE_FORCE, self.center_x - player_sprite.center_x)
-
-        angle = math.atan2(-self.center_y+player_sprite.center_y, -self.center_x + player_sprite.center_x)
-        self.angle=angle
-        return tuple(force)
     
 
 class Button():
@@ -127,6 +230,7 @@ class GameWindow(arcade.Window):
         self.player_list: Optional[arcade.SpriteList] = None
         self.wall_list: Optional[arcade.SpriteList] = None
         self.bullet_list: Optional[arcade.SpriteList] = None
+        # self.enemy_bullet_list: Optional[arcade.SpriteList] = None maybe later
         self.item_list: Optional[arcade.SpriteList] = None
         self.moving_sprites_list: Optional[arcade.SpriteList] = None
         self.ladder_list: Optional[arcade.SpriteList] = None
@@ -143,6 +247,7 @@ class GameWindow(arcade.Window):
         self.up_pressed: bool = False
         self.down_pressed: bool = False
         self.respawn_index=0
+        self.enemy = None
         #add scene
         self.scene: arcade.Scene() = None
         # self.possible_jumps=2
@@ -154,9 +259,9 @@ class GameWindow(arcade.Window):
         self.spawn_points=None
         self.mode = 0 #shoot
         self.impersonating = False
+        self.enemy_list:Optional[arcade.SpriteList] = None
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
-
 
     def setup(self):
         self.impersonating = False
@@ -179,6 +284,7 @@ class GameWindow(arcade.Window):
             
         # Pull the sprite layers out of the tile map
         self.wall_list = tile_map.sprite_lists["Platforms"]
+        self.wall_list.enable_spatial_hashing()
         self.pushable_objects_list = tile_map.sprite_lists["Pushable Items"]
         self.item_list = tile_map.sprite_lists["Dynamic Items"]
         self.ladder_list = tile_map.sprite_lists["Ladders"]
@@ -187,11 +293,12 @@ class GameWindow(arcade.Window):
         self.door_list = []
         self.spawn_points = tile_map.object_lists["Spawn"]
         self.finish_line = tile_map.sprite_lists["Finish_line"]
+        self.enemy_paths = tile_map.object_lists["Enemy"]
+        print(self.spawn_points[2].shape)
         i=0
         while True:
             try:
                 self.door_list.append(Door(tile_map.sprite_lists[f"Door{i+1}"]))
-                print("door added",flush=1)
                 i+=1
             except:
                 break
@@ -213,7 +320,7 @@ class GameWindow(arcade.Window):
         # Create the sprite lists
         self.player_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
-
+        self.enemy_list  = arcade.SpriteList()
         # self.button1 = Button(1600, 1000)
         # self.button2 = Button(300, 1200)
         # self.button_list.append(self.button1)
@@ -256,24 +363,34 @@ class GameWindow(arcade.Window):
                                             moment_of_intertia=arcade.PymunkPhysicsEngine.MOMENT_INF,
                                             body_type=arcade.PymunkPhysicsEngine.DYNAMIC)
         
-        self.friend=Friend(":resources:images/items/coinGold.png", 1)
-        self.friend.center_x = random.randrange(SCREEN_WIDTH)
-        self.friend.center_y = random.randrange(SCREEN_HEIGHT)
-        self.physics_engine.add_sprite(self.friend,
-                                            friction=0.7,
-                                            collision_type="push",
-                                            moment_of_intertia=arcade.PymunkPhysicsEngine.MOMENT_INF,
-                                            body_type=arcade.PymunkPhysicsEngine.DYNAMIC)
-        
+        self.friend=Friend(":resources:images/items/coinGold.png", 0.5,self.wall_list,self.player_sprite)
+
+        self.friend.center_x = self.respawn_point.shape[0]+50
+        self.friend.center_y = self.respawn_point.shape[1]+50
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             if self.is_trying_to_take_object==True:
                 item_sprite.remove_from_sprite_lists()
                 print("shit taken")
-        self.physics_engine.add_collision_handler("player1","item",post_handler=item_hit_by_player_handler)
-
+        self.physics_engine.add_collision_handler("player","item",post_handler=item_hit_by_player_handler)
+        def enemy_hit_handler(bullet_sprite, enemy_sprite, _arbiter, _space, _data):
+            if bullet_sprite.mode != "player":
+                return
+            enemy_sprite.hp-=1
+            if enemy_sprite.hp<=1:
+               enemy_sprite.kill() 
+            bullet_sprite.remove_from_sprite_lists()
+        self.physics_engine.add_collision_handler("bullet","enemy",post_handler= enemy_hit_handler)
+        def player_hit_by_bullet(bullet_sprite, player_sprite, _arbiter, _space, _data):
+            if bullet_sprite.mode != "enemy":
+                return
+            player_sprite.HP-=1
+            if player_sprite.HP<=1:
+               self.setup() 
+            bullet_sprite.remove_from_sprite_lists()
+        self.physics_engine.add_collision_handler("bullet","player",post_handler=player_hit_by_bullet)
         def reached_end_point(player_sprite, end_sprite, _arbiter, _space, _data):
             self.setup()
-        self.physics_engine.add_collision_handler("player1","end",post_handler=reached_end_point)
+        self.physics_engine.add_collision_handler("player","end",post_handler=reached_end_point)
 
         # self.physics_engine.
         def wall_hit_handler(bullet_sprite, _wall_sprite, _arbiter, _space, _data):
@@ -283,6 +400,14 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_collision_handler("bullet", "wall", post_handler=wall_hit_handler)
         self.physics_engine.add_collision_handler("bullet", "end", post_handler=wall_hit_handler)
 
+        def short_attack_enemy(enemy_sprite, player_sprite, _arbiter, _space, _data):
+            if enemy_sprite.attack_cooldown < 0:
+                enemy_sprite.attack_cooldown = 1
+                player_sprite.HP-=1
+                print(player_sprite.HP,flush=True)
+                if player_sprite.HP<=0:
+                    self.setup()
+        self.physics_engine.add_collision_handler("enemy", "player", post_handler=short_attack_enemy)
         def push_hit_handler(bullet_sprite, push_sprite, _arbiter, _space, _data):
             if self.mode == 1:
                 self.player_sprite_old = self.player_sprite
@@ -301,7 +426,7 @@ class GameWindow(arcade.Window):
         def finish_line_reached(_player_sprite,_finish_line, _arbiter, _space, _data):
             self.level+=1
             self.setup()
-        self.physics_engine.add_collision_handler("player1", "finish", post_handler=finish_line_reached)
+        self.physics_engine.add_collision_handler("player", "finish", post_handler=finish_line_reached)
         # Add the player.
         # For the player, we set the damping to a lower value, which increases
         # the damping rate. This prevents the character from traveling too far
@@ -322,7 +447,7 @@ class GameWindow(arcade.Window):
                                     #    friction=PLAYER_FRICTION,
                                        mass=PLAYER_MASS,
                                        moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
-                                       collision_type="player1",
+                                       collision_type="player",
                                        elasticity=1,
                                        max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
                                        max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED)
@@ -348,7 +473,20 @@ class GameWindow(arcade.Window):
         # Add kinematic sprites
         self.physics_engine.add_sprite_list(self.moving_sprites_list,
                                             body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
-        
+
+        for enemy_path in self.enemy_paths:
+            enemy = Path_finding_enemy(":resources:images/animated_characters/female_person/femalePerson_idle.png",
+                                    0.5,self.player_sprite,self.wall_list,enemy_path.shape)
+            self.enemy_list.append(enemy)
+            self.physics_engine.add_sprite(
+                                    enemy,
+                                    mass=PLAYER_MASS,
+                                    moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
+                                    collision_type="enemy",
+                                    damping=1,
+                                    elasticity=1,
+                                    max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
+                                    max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED)
 
     def center_camera_to_player(self):
         screen_center_x = self.player_sprite.center_x - (self.camera.viewport_width / 2)
@@ -357,10 +495,10 @@ class GameWindow(arcade.Window):
         )
 
         #Don't let camera travel past 0
-        if screen_center_x < 0:
-            screen_center_x = 0
-        if screen_center_y < 0:
-            screen_center_y = 0
+        if screen_center_x < -100:
+            screen_center_x = -100
+        if screen_center_y < -100:
+            screen_center_y = -100
         player_centered = screen_center_x, screen_center_y
 
         self.camera.move_to(player_centered)
@@ -413,45 +551,12 @@ class GameWindow(arcade.Window):
         """ Called whenever the mouse button is clicked. """
         if self.impersonating == True:
             return
-        bullet = BulletSprite(20, 5, arcade.color.LIGHT_BLUE,self.player_sprite)
+        bullet = BulletSprite(":resources:images/space_shooter/laserBlue01.png",self.player_sprite,
+                              x+self.camera.position.x,#camera offset
+                              y+self.camera.position.y,
+                              "player")#camera offset
         self.bullet_list.append(bullet)
 
-        # Position the bullet at the player's current location
-        start_x = self.player_sprite.center_x
-        start_y = self.player_sprite.center_y
-        bullet.position = self.player_sprite.position
-
-        # Get from the mouse the destination location for the bullet
-        # IMPORTANT! If you have a scrolling screen, you will also need
-        # to add in self.view_bottom and self.view_left.
-        dest_x = x+self.camera.position.x
-        dest_y = y+self.camera.position.y
-        
-        # Do math to calculate how to get the bullet to the destination.
-        # Calculation the angle in radians between the start points
-        # and end points. This is the angle the bullet will travel.
-        x_diff = dest_x - start_x
-        y_diff = dest_y - start_y
-        angle = math.atan2(y_diff, x_diff)
-
-        # What is the 1/2 size of this sprite, so we can figure out how far
-        # away to spawn the bullet
-        size = max(self.player_sprite.width, self.player_sprite.height) / 2
-
-        # Use angle to to spawn bullet away from player in proper direction
-        bullet.center_x += size * math.cos(angle)
-        bullet.center_y += size * math.sin(angle)
-
-        # Set angle of bullet
-        bullet.angle = math.degrees(angle)
-
-        # Gravity to use for the bullet
-        # If we don't use custom gravity, bullet drops too fast, or we have
-        # to make it go too fast.
-        # Force is in relation to bullet's angle.
-        # bullet_gravity = (0, -BULLET_GRAVITY)
-
-        # Add the sprite. This needs to be done AFTER setting the fields above.
         self.physics_engine.add_sprite(bullet,
                                        mass=BULLET_MASS,
                                        damping=1,
@@ -464,12 +569,15 @@ class GameWindow(arcade.Window):
         self.physics_engine.apply_force(bullet, force)
 
     def on_update(self, delta_time):
+        for enemy in self.enemy_list:
+            enemy.on_update(self.physics_engine,delta_time,self.bullet_list)
+        self.friend.on_update()
         """ Movement and game logic """
-    #Friend follow
-        print(self.friend.follow_sprite(self.player_sprite),flush=True)
-        self.physics_engine.apply_force(self.friend,
-                                        self.friend.follow_sprite(self.player_sprite)#force needed to move
-                                        )
+        # if arcade.has_line_of_sight(self.player_sprite.position,self.friend.position,self.wall_list,max_distance=500):
+        #     self.physics_engine.apply_force(self.friend,
+        #                                     self.friend.follow_sprite(self.player_sprite)#force needed to move
+        #                                     )
+        
     # Button logic
         for i in self.button_list:
             for j in self.pushable_objects_list:
@@ -575,10 +683,15 @@ class GameWindow(arcade.Window):
         self.item_list.draw()
         self.player_list.draw()
         self.friend.draw()
+        self.enemy_list.draw()
         self.end_points.draw_hit_boxes()
         self.item_list.draw_hit_boxes()
         self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
+        try:
+            arcade.draw_line_strip(self.friend.path, arcade.color.BLUE, 2)
+        except:
+            pass
         self.finish_line.draw_hit_boxes(color=arcade.color_from_hex_string("FF0000"),line_thickness = 1.2)
         drawDoors(self.door_list)
 
