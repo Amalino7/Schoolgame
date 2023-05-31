@@ -4,10 +4,9 @@ SCREEN_TITLE = "Clumsy Magus"
 SPRITE_IMAGE_SIZE = 128
 
 # Scale sprites up or down
-SPRITE_SCALING_PLAYER = 1
+SPRITE_SCALING_PLAYER = 0.5
 SPRITE_SCALING_TILES = 2
 
-FOLLOWER_SPEED = 1000
 # Scaled sprite size for tiles
 SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
 
@@ -50,11 +49,9 @@ DEAD_ZONE = 0.1
 # Constants used to track if the player is facing left or right
 RIGHT_FACING = 0
 LEFT_FACING = 1
-BACK_FACING = 2
-FRONT_FACING = 3
 
 # How many pixels to move before we change the texture in the walking animation
-DISTANCE_TO_CHANGE_TEXTURE = 50
+DISTANCE_TO_CHANGE_TEXTURE = 20
 
 # How much force to put on the bullet
 BULLET_MOVE_FORCE = 4500
@@ -65,4 +62,14 @@ BULLET_MASS = 0.1
 # Make bullet less affected by gravity
 BULLET_GRAVITY = 300
 
-DIST_UNTIL_BACKFIRE = 10000000000
+# Navigation speed
+SPRITE_SPEED = 3
+
+# Laser speed
+LASER_SPEED = 5
+
+# Reflector ID
+REFL_UL = 30
+REFL_UR = 30
+REFL_DL = 30
+REFL_DR = 30
