@@ -50,6 +50,7 @@ class Laser(arcade.Sprite):
         self.dirx = 1.0
         self.diry = 0.0
         self.direction = 0
+        self.state = False # off
 
     def change_direction(self, direction):
         self.direction = direction
@@ -80,7 +81,12 @@ def reflect_laser(dir1, dir2, laser):
     elif laser.get_direction() == dir2:
         laser.change_direction(laser.get_direction()-1)
     else:
-        laser.remove_from_sprite_lists()
+        laser.state = False
+
+def shoot_laser(laser, direction, emmiter_pos):
+    laser.position = emmiter_pos
+    laser.change_direction(direction)
+    laser.state = True
 
 
 class Lever():
@@ -146,7 +152,11 @@ class GameWindow(arcade.Window):
         self.moving_sprites_list: Optional[arcade.SpriteList] = None
         self.ladder_list: Optional[arcade.SpriteList] = None
         self.pushable_objects_list: Optional[arcade.SpriteList] = None
+
         self.reflector_list: Optional[arcade.SpriteList] = None
+        self.emmiter_list: Optional[arcade.SpriteList] = None
+        self.collector_list: Optional[arcade.SpriteList] = None
+
         self.door_list = None
         self.is_trying_to_take_object: bool=False
         self.button_list=None
@@ -174,9 +184,8 @@ class GameWindow(arcade.Window):
         self.locked_doors: Optional[arcade.SpriteList] = None
         self.held_keys = arcade.SpriteList()
         self.keycount = 0
-        self.buffer = False
-        self.changer = True
-        self.laser_collision = True
+        self.buffer: bool = False
+        self.laser_collision: bool = True
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
 
@@ -197,7 +206,7 @@ class GameWindow(arcade.Window):
         tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
         
         # Pull the sprite layers out of the tile map
-        self.wall_list = tile_map.sprite_lists["Platforms"]
+        self.wall_list = tile_map.sprite_lists["Walls"]
         self.pushable_objects_list = tile_map.sprite_lists["Pushable Items"]
         self.item_list = tile_map.sprite_lists["Dynamic Items"]
         self.ladder_list = tile_map.sprite_lists["Ladders"]
@@ -205,7 +214,10 @@ class GameWindow(arcade.Window):
         self.background = tile_map.sprite_lists['Background']
         self.keys = tile_map.sprite_lists['Keys']
         self.locked_doors = tile_map.sprite_lists['Locked_Doors']
-        self.reflector_list = tile_map.sprite_lists['Reflector']
+        self.reflector_list = tile_map.sprite_lists['Reflectors']
+        self.emmiter_list = tile_map.sprite_lists['Emmiters']
+        #self.collector_list = tile_map.sprite_lists['Collectors']
+
 
         self.door_list = []
         self.spawn_points = tile_map.object_lists["Spawn"]
@@ -270,7 +282,6 @@ class GameWindow(arcade.Window):
         self.player_list.append(self.player_sprite)
 
         self.laser = Laser(":resources:images/items/coinGold.png", 0.4, self.player_sprite.position)
-        self.bullet_list.append(self.laser)
 
         # --- Pymunk Physics Engine Setup ---
 
@@ -343,6 +354,7 @@ class GameWindow(arcade.Window):
                         key.remove_from_sprite_lists()
                         self.keycount -= 1
 
+
         # Add the player.
         # For the player, we set the damping to a lower value, which increases
         # the damping rate. This prevents the character from traveling too far
@@ -403,8 +415,13 @@ class GameWindow(arcade.Window):
     
         self.physics_engine.add_sprite_list(self.reflector_list,
                                             collision_type="push",
+                                            moment_of_intertia=arcade.PymunkPhysicsEngine.MOMENT_INF,
                                             body_type=arcade.PymunkPhysicsEngine.DYNAMIC,
                                             mass=10)
+        
+        self.physics_engine.add_sprite_list(self.emmiter_list,
+                                            collision_type="wall",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
 
         self.physics_engine.add_collision_handler("player1", "locked door", post_handler=locked_door_hit_by_player_handler)
         self.physics_engine.add_collision_handler("bullet", "locked door", post_handler=wall_hit_handler)
@@ -440,10 +457,17 @@ class GameWindow(arcade.Window):
         if key == arcade.key.E:
             self.player_sprite.is_trying_to_take_object=True
             self.is_trying_to_take_object=True
+
         if key == arcade.key.L:
             self.laser.change_direction(self.laser.get_direction()+1)
         if key == arcade.key.K:
             self.laser.change_direction(self.laser.get_direction()-1)
+        if key == arcade.key.J and not self.laser.state:
+            test = None
+            for i in self.emmiter_list:
+                test = i .position
+            shoot_laser(self.laser, 0, test)
+
 
         if key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = True
@@ -538,8 +562,8 @@ class GameWindow(arcade.Window):
     def on_update(self, delta_time):
         """ Movement and game logic """
 
-        self.laser.update()
-        print(self.laser.get_direction())
+        if self.laser.state:
+            self.laser.update()
 
         #self.enemy_list.update()
         #for enemy in self.enemy_list:
@@ -669,7 +693,7 @@ class GameWindow(arcade.Window):
             self.laser_collision = True
         
         if arcade.check_for_collision_with_list(self.laser, self.wall_list):
-            self.laser.remove_from_sprite_lists()
+            self.laser.state = False
         
 
     def on_draw(self):
@@ -690,6 +714,10 @@ class GameWindow(arcade.Window):
         self.locked_doors.draw()
 
         self.reflector_list.draw()
+        self.emmiter_list.draw()
+        if self.laser.state:
+            self.laser.draw()
+
 
         #self.enemy_list.draw()
         self.player_list.draw()

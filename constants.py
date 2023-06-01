@@ -71,5 +71,5 @@ LASER_SPEED = 5
 # Reflector ID
 REFL_UL = 30
 REFL_UR = 30
-REFL_DL = 30
+REFL_DL = 47
 REFL_DR = 30
