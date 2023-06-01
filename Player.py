@@ -8,6 +8,7 @@ class PlayerSprite(arcade.Sprite):
                 hit_box_algorithm):
         """ Init """
         self.physics_engine = Optional[arcade.PymunkPhysicsEngine]
+        self.attack_cooldown = 0
         # Let parent initialize
         super().__init__()
 

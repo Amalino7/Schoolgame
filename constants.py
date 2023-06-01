@@ -7,14 +7,13 @@ SPRITE_IMAGE_SIZE = 128
 SPRITE_SCALING_PLAYER = 1
 SPRITE_SCALING_TILES = 2
 
-FOLLOWER_SPEED = 1000
 # Scaled sprite size for tiles
 SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
 
 # Size of screen to show, in pixels
 root = tk.Tk()
 SCREEN_WIDTH = root.winfo_screenwidth()
-SCREEN_HEIGHT = root.winfo_screenheight()
+SCREEN_HEIGHT = root.winfo_screenheight() 
 
 # --- Physics forces. Higher number, faster accelerating.
 
@@ -66,7 +65,8 @@ BULLET_MASS = 0.1
 BULLET_GRAVITY = 300
 
 DIST_UNTIL_BACKFIRE = 10000000000
-SPRITE_SPEED = 10
+ENEMY_SPEED = 10
+FOLLOW_SPEED = 3
 FORCE_FOR_MOVEMENT= 100
 
 CLOSE_ENOUGH = 0.1
@@ -76,3 +76,5 @@ TIME_TO_SEE = 1
 BULLET_MOVE_TICK = 15
 
 FORCE_MULTIPLR = 10
+
+ATTACK_COOLDOWN_TIME=0.1
