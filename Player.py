@@ -41,7 +41,7 @@ class PlayerSprite(arcade.Sprite):
         # Index of our current texture
         self.cur_texture = 0
 
-        # How far have we traveled horizontally since changing the texture
+        # How far have we traveled horizontally and vertically since changing the texture
         self.x_odometer = 0
         self.y_odometer = 0
 

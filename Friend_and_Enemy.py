@@ -5,8 +5,33 @@ import math
 from Player import *
 class Friend(arcade.Sprite):
     """friend that will follow us arround """
-    def __init__(self, image, scale, wall_list,player_sprite):
-        super().__init__(image, scale)
+    def __init__(self, main_path, scale, wall_list,player_sprite):
+        """Animation"""
+        self.cur_texture=0
+        super().__init__(scale=scale)
+        """Textures"""    
+        self.front_texture_list=[]
+        self.back_texture_list=[]
+        self.left_texture_list=[]
+        self.right_texture_list=[]
+        # Load textures for idle standing\
+        for i in range(1,3):
+            self.front_texture_list.append(arcade.load_texture(f"{main_path}_front_{i}.png",hit_box_algorithm="Detailed"))
+            self.back_texture_list.append(arcade.load_texture(f"{main_path}_back_{i}.png"))
+            self.left_texture_list.append(arcade.load_texture(f"{main_path}_left_{i}.png"))
+            self.right_texture_list.append(arcade.load_texture(f"{main_path}_right_{i}.png"))
+        #default texture
+        self.texture = self.front_texture_list[0]
+        # Hit box will be set based on the first image used.
+        self.hit_box = self.texture.hit_box_points
+        # How far have we traveled horizontally and vertically since changing the texture
+        self.x_odometer = 0
+        self.y_odometer = 0
+        # Default to face-right
+        self.character_face_direction_x = RIGHT_FACING
+        self.character_face_direction_y = FRONT_FACING
+
+        """Other things"""
         self.barrier_list = arcade.AStarBarrierList(self, wall_list, 31, -2000, 5000, -2000, 2000)
         self.path = None
         self.player_sprite = player_sprite
@@ -14,29 +39,104 @@ class Friend(arcade.Sprite):
         self.time_passed = 0
        
     def on_update(self, delta_time: float = 1/60):
-        self.update_path(self.player_sprite,delta_time)
+        change=self.update_path(self.player_sprite,delta_time)
+        self.center_x+=change[0]
+        self.center_y+=change[1]
+        self.animation(change[0],change[1])
         self.time_passed+=delta_time
         
     def update_path(self, player_sprite,delta_time):
         self.path = arcade.astar_calculate_path(self.position, player_sprite.position, self.barrier_list, diagonal_movement=True)
-
+        change=[0,0]
         # Move to next point on path. Using min to avoid overshooting
         if self.path and len(self.path) > 1:
             if self.center_y < self.path[1][1]:
-                self.center_y += min(FOLLOW_SPEED, self.path[1][1] - self.center_y)
+                change[1] = min(FOLLOW_SPEED, self.path[1][1] - self.center_y)
             elif self.center_y > self.path[1][1]:
-                self.center_y -= min(FOLLOW_SPEED, self.center_y - self.path[1][1])
+                change[1] = -min(FOLLOW_SPEED, self.center_y - self.path[1][1])
             
             if self.center_x < self.path[1][0]:
-                self.center_x += min(FOLLOW_SPEED, self.path[1][0] - self.center_x)
+                change[0] = min(FOLLOW_SPEED, self.path[1][0] - self.center_x)
             elif self.center_x > self.path[1][0]:
-                self.center_x -= min(FOLLOW_SPEED, self.center_x - self.path[1][0])
-    
+                change[0] = -min(FOLLOW_SPEED, self.center_x - self.path[1][0])
+        return tuple(change)
+    def animation(self,dx,dy):
+        # Figure out if we need to face left or right
+        #Reminder fix this bs later
+        if dx < -DEAD_ZONE and self.character_face_direction_x == RIGHT_FACING:
+            self.character_face_direction_x = LEFT_FACING
+        elif dx > DEAD_ZONE and self.character_face_direction_x == LEFT_FACING:
+            self.character_face_direction_x = RIGHT_FACING
+
+        if dy > DEAD_ZONE and self.character_face_direction_y == FRONT_FACING:
+            self.character_face_direction_y = BACK_FACING
+        elif dy < -DEAD_ZONE and self.character_face_direction_y == BACK_FACING:
+            self.character_face_direction_y = FRONT_FACING
+        # Add to the odometer how far we've moved
+        self.x_odometer += dx
+        self.y_odometer += dy
+
+        # Idle animation
+        if abs(dx) <= DEAD_ZONE and abs(dy) <= DEAD_ZONE:
+            self.texture = self.front_texture_list[0]
+            return
+        # Have we moved far enough to change the texture?
+        if abs(dx)>abs(dy):
+            if abs(self.x_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
+            # Reset the odometer
+                self.x_odometer = 0
+
+                # Advance the walking animation
+                self.cur_texture += 1
+                if self.cur_texture > 1:
+                    self.cur_texture = 0
+                if self.character_face_direction_x == LEFT_FACING:
+                    self.texture = self.left_texture_list[self.cur_texture]
+                elif self.character_face_direction_x == RIGHT_FACING:
+                    self.texture = self.right_texture_list[self.cur_texture]
+        elif abs(dy)>abs(dx):
+            if abs(self.y_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
+                self.y_odometer = 0
+
+                # Advance the walking animation
+                self.cur_texture += 1
+                if self.cur_texture > 1:
+                    self.cur_texture = 0
+                
+                if self.character_face_direction_y == FRONT_FACING:
+                    self.texture = self.front_texture_list[self.cur_texture]
+                elif self.character_face_direction_y == BACK_FACING:
+                    self.texture = self.back_texture_list[self.cur_texture]
 class Enemy(arcade.Sprite):
-    def __init__(self, image, scale,player_sprite,wall_list,path):
+    def __init__(self, main_path, scale,player_sprite,wall_list,path):
+        self.cur_texture=0
         self.wall_list=wall_list
-        super().__init__(image, scale)
-        """proces path so it scales right"""
+        super().__init__(scale=scale)
+        """Textures"""    
+        self.front_texture_list=[]
+        self.back_texture_list=[]
+        self.left_texture_list=[]
+        self.right_texture_list=[]
+        self.HP = 10
+        # Load textures for idle standing\
+        for i in range(1,3):
+            self.front_texture_list.append(arcade.load_texture(f"{main_path}_front_{i}.png",hit_box_algorithm="Detailed"))
+            self.back_texture_list.append(arcade.load_texture(f"{main_path}_back_{i}.png"))
+            self.left_texture_list.append(arcade.load_texture(f"{main_path}_left_{i}.png"))
+            self.right_texture_list.append(arcade.load_texture(f"{main_path}_right_{i}.png"))
+        #default texture
+        self.texture = self.front_texture_list[0]
+        # Hit box will be set based on the first image used.
+        self.hit_box = self.texture.hit_box_points
+        # How far have we traveled horizontally and vertically since changing the texture
+        self.x_odometer = 0
+        self.y_odometer = 0
+        # Default to face-right
+        self.character_face_direction_x = RIGHT_FACING
+        self.character_face_direction_y = FRONT_FACING
+
+
+        """Process path so it scales right"""
         self.static_path = []
         for i in path:
             lista =[]
@@ -44,7 +144,7 @@ class Enemy(arcade.Sprite):
                 cord*=SPRITE_SCALING_TILES
                 lista.append(cord)
             self.static_path.append(tuple(lista))
-        
+        """Path and other things"""
         self.center_x = self.static_path[0][0]
         self.center_y = self.static_path[0][1]
         self.cur_dir=1
@@ -53,6 +153,8 @@ class Enemy(arcade.Sprite):
         self.time_in_sight = 0
         self.hp = 10
         self.attack_cooldown=0
+
+
     def reload(self,physic_engine:Optional[arcade.PymunkPhysicsEngine]):
         physic_engine.set_position(self,self.static_path[0])
     def on_update(self,physic_engine:Optional[arcade.PymunkPhysicsEngine],delta_time,bullet_list):
@@ -128,6 +230,54 @@ class Enemy(arcade.Sprite):
         force[1]*=FORCE_MULTIPLR
         return tuple(force)
 
+    def pymunk_moved(self, physics_engine, dx, dy, d_angle):
+        # Figure out if we need to face left or right
+        #Reminder fix this bs later
+        if dx < -DEAD_ZONE and self.character_face_direction_x == RIGHT_FACING:
+            self.character_face_direction_x = LEFT_FACING
+        elif dx > DEAD_ZONE and self.character_face_direction_x == LEFT_FACING:
+            self.character_face_direction_x = RIGHT_FACING
+
+        if dy > DEAD_ZONE and self.character_face_direction_y == FRONT_FACING:
+            self.character_face_direction_y = BACK_FACING
+        elif dy < -DEAD_ZONE and self.character_face_direction_y == BACK_FACING:
+            self.character_face_direction_y = FRONT_FACING
+        # Add to the odometer how far we've moved
+        self.x_odometer += dx
+        self.y_odometer += dy
+
+        # Idle animation
+        if abs(dx) <= DEAD_ZONE and abs(dy) <= DEAD_ZONE:
+            self.texture = self.front_texture_list[0]
+            return
+        # Have we moved far enough to change the texture?
+        if abs(dx)>abs(dy):
+            if abs(self.x_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
+            # Reset the odometer
+                self.x_odometer = 0
+
+                # Advance the walking animation
+                self.cur_texture += 1
+                if self.cur_texture > 1:
+                    self.cur_texture = 0
+                if self.character_face_direction_x == LEFT_FACING:
+                    self.texture = self.left_texture_list[self.cur_texture]
+                elif self.character_face_direction_x == RIGHT_FACING:
+                    self.texture = self.right_texture_list[self.cur_texture]
+        elif abs(dy)>abs(dx):
+            if abs(self.y_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
+                self.y_odometer = 0
+
+                # Advance the walking animation
+                self.cur_texture += 1
+                if self.cur_texture > 1:
+                    self.cur_texture = 0
+                
+                if self.character_face_direction_y == FRONT_FACING:
+                    self.texture = self.front_texture_list[self.cur_texture]
+                elif self.character_face_direction_y == BACK_FACING:
+                    self.texture = self.back_texture_list[self.cur_texture]
+    
 class BulletSprite(arcade.Sprite):
     """ Bullet Sprite """
     def __init__(self, image, player_sprite,direction_x,direction_y,mode):
