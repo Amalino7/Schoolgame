@@ -3763,15 +3763,15 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"..\/tsx_files\/cave_terrain.tsx"
+         "source":"..\/tilesets\/cave_terrain.tsx"
         }, 
         {
          "firstgid":325,
-         "source":"..\/tsx_files\/interactables.tsx"
+         "source":"..\/tilesets\/interactables.tsx"
         }, 
         {
          "firstgid":649,
-         "source":"..\/tsx_files\/overworld_terrain.tsx"
+         "source":"..\/tilesets\/overworld_terrain.tsx"
         }],
  "tilewidth":128,
  "type":"map",

@@ -2555,8 +2555,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":-3308.33333333333,
-                 "y":-1691.66666666667
+                 "x":-3308.33,
+                 "y":-1691.67
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -2949,11 +2949,11 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"..\/tsx_files\/overworld_terrain.tsx"
+         "source":"..\/tilesets\/overworld_terrain.tsx"
         }, 
         {
          "firstgid":325,
-         "source":"..\/tsx_files\/interactables.tsx"
+         "source":"..\/tilesets\/interactables.tsx"
         }],
  "tilewidth":128,
  "type":"map",
