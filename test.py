@@ -96,7 +96,11 @@ class Lever():
         self.mainsprite=sprite1
         self.pressed = False
 
-
+class Collector(arcade.Sprite):
+    def __init__(self,image,x,y):
+        super().__init__(texture=image,center_x=x,center_y=y)
+        self.guza_na_madona="yay"
+    
 def drawLevers(leverlist):
     for lever in leverlist:
         lever.mainsprite.draw()
@@ -216,9 +220,11 @@ class GameWindow(arcade.Window):
         self.locked_doors = tile_map.sprite_lists['Locked_Doors']
         self.reflector_list = tile_map.sprite_lists['Reflectors']
         self.emitter_list = tile_map.sprite_lists['Emitters']
-        self.collector_list = tile_map.sprite_lists['Collectors']
-
-
+        self.collector_list = arcade.SpriteList()
+        for sprite in tile_map.sprite_lists['Collectors']:
+            tmp_collect=Collector(sprite.texture,sprite.center_x,sprite.center_y)
+            self.collector_list.append(tmp_collect)
+        
         self.door_list = []
         self.spawn_points = tile_map.object_lists["Spawn"]
 
@@ -724,11 +730,10 @@ class GameWindow(arcade.Window):
         if self.laser.state:
             self.laser.draw()
 
-
+        self.collector_list.draw()
         #self.enemy_list.draw()
         self.player_list.draw()
 
-        
         #if self.enemy_list[0].path:
             #arcade.draw_line_strip(self.enemy_list[0].path, arcade.color.BLUE, 2)
         #self.enemy_list.draw_hit_boxes()
