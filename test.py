@@ -83,8 +83,8 @@ def reflect_laser(dir1, dir2, laser):
     else:
         laser.state = False
 
-def shoot_laser(laser, direction, emmiter_pos):
-    laser.position = emmiter_pos
+def shoot_laser(laser, direction, emitter_pos):
+    laser.position = emitter_pos
     laser.change_direction(direction)
     laser.state = True
 
@@ -154,7 +154,7 @@ class GameWindow(arcade.Window):
         self.pushable_objects_list: Optional[arcade.SpriteList] = None
 
         self.reflector_list: Optional[arcade.SpriteList] = None
-        self.emmiter_list: Optional[arcade.SpriteList] = None
+        self.emitter_list: Optional[arcade.SpriteList] = None
         self.collector_list: Optional[arcade.SpriteList] = None
 
         self.door_list = None
@@ -215,8 +215,8 @@ class GameWindow(arcade.Window):
         self.keys = tile_map.sprite_lists['Keys']
         self.locked_doors = tile_map.sprite_lists['Locked_Doors']
         self.reflector_list = tile_map.sprite_lists['Reflectors']
-        self.emmiter_list = tile_map.sprite_lists['Emmiters']
-        #self.collector_list = tile_map.sprite_lists['Collectors']
+        self.emitter_list = tile_map.sprite_lists['Emitters']
+        self.collector_list = tile_map.sprite_lists['Collectors']
 
 
         self.door_list = []
@@ -254,7 +254,7 @@ class GameWindow(arcade.Window):
             try:
                 for lever1,lever2 in zip(tile_map.sprite_lists[f"L{i+1}State1"],tile_map.sprite_lists[f"L{i+1}State2"]):
                     self.lever_list.append(Lever(lever1,lever2))
-                print("door added",flush=1)
+                print("lever added",flush=1)
                 i+=1
             except:
                 break
@@ -281,7 +281,7 @@ class GameWindow(arcade.Window):
         # Add to player sprite list
         self.player_list.append(self.player_sprite)
 
-        self.laser = Laser(":resources:images/items/coinGold.png", 0.4, self.player_sprite.position)
+        self.laser = Laser(":resources:images/space_shooter/laserBlue01.png", 1.0, self.player_sprite.position)
 
         # --- Pymunk Physics Engine Setup ---
 
@@ -419,7 +419,7 @@ class GameWindow(arcade.Window):
                                             body_type=arcade.PymunkPhysicsEngine.DYNAMIC,
                                             mass=10)
         
-        self.physics_engine.add_sprite_list(self.emmiter_list,
+        self.physics_engine.add_sprite_list(self.emitter_list,
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
 
@@ -464,7 +464,7 @@ class GameWindow(arcade.Window):
             self.laser.change_direction(self.laser.get_direction()-1)
         if key == arcade.key.J and not self.laser.state:
             test = None
-            for i in self.emmiter_list:
+            for i in self.emitter_list:
                 test = i .position
             shoot_laser(self.laser, 0, test)
 
@@ -694,6 +694,12 @@ class GameWindow(arcade.Window):
         
         if arcade.check_for_collision_with_list(self.laser, self.wall_list):
             self.laser.state = False
+
+        # Lever/Emmiter logic
+        for i in range(len(self.lever_list)):
+            if self.lever_list[i].pressed and not self.laser.state:
+                emitter = self.emitter_list[i]
+                shoot_laser(self.laser, emitter.properties['tile_id']-EMMIT_OFSET, emitter.position)
         
 
     def on_draw(self):
@@ -714,7 +720,7 @@ class GameWindow(arcade.Window):
         self.locked_doors.draw()
 
         self.reflector_list.draw()
-        self.emmiter_list.draw()
+        self.emitter_list.draw()
         if self.laser.state:
             self.laser.draw()
 

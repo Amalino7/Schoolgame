@@ -69,7 +69,16 @@ SPRITE_SPEED = 3
 LASER_SPEED = 5
 
 # Reflector ID
-REFL_UL = 30
-REFL_UR = 30
 REFL_DL = 47
-REFL_DR = 30
+REFL_DR = REFL_DL + 1
+REFL_UR = REFL_DL + 2
+REFL_UL = REFL_DL + 3
+
+# Emmiter constant
+EMMIT_OFSET = 38
+
+# Collector ID
+COL_L = 1
+COL_R = COL_L + 1
+COL_U = COL_L + 2
+COL_D = COL_L + 3
