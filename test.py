@@ -89,6 +89,24 @@ def shoot_laser(laser, direction, emitter_pos):
     laser.state = True
 
 
+class Collector(arcade.Sprite):
+    def __init__(self,image,x,y, tile_id):
+        super().__init__(texture=image,center_x=x,center_y=y)
+        self.active = False
+        self.tile_id = tile_id
+
+
+def accepted_collector_dir(collector):
+    direction = (COLL_OFSET - collector.tile_id)
+    direction += 2
+    if direction > 3:
+        direction -= 4
+    elif direction < 0:
+        direction += 4
+    
+    return direction
+
+
 class Lever():
     def __init__(self, sprite1,sprite2):
         self.sprite1=sprite1
@@ -96,10 +114,6 @@ class Lever():
         self.mainsprite=sprite1
         self.pressed = False
 
-class Collector(arcade.Sprite):
-    def __init__(self,image,x,y):
-        super().__init__(texture=image,center_x=x,center_y=y)
-        self.guza_na_madona="yay"
     
 def drawLevers(leverlist):
     for lever in leverlist:
@@ -222,7 +236,7 @@ class GameWindow(arcade.Window):
         self.emitter_list = tile_map.sprite_lists['Emitters']
         self.collector_list = arcade.SpriteList()
         for sprite in tile_map.sprite_lists['Collectors']:
-            tmp_collect=Collector(sprite.texture,sprite.center_x,sprite.center_y)
+            tmp_collect=Collector(sprite.texture,sprite.center_x,sprite.center_y, sprite.properties['tile_id'])
             self.collector_list.append(tmp_collect)
         
         self.door_list = []
@@ -681,7 +695,7 @@ class GameWindow(arcade.Window):
         
         self.center_camera_to_player()
 
-        #Laser logic
+        #Reflector logic
         if arcade.check_for_collision_with_list(self.laser, self.reflector_list) and self.laser_collision:
             for reflector in self.reflector_list:
                 if arcade.check_for_collision(self.laser, reflector):
@@ -705,7 +719,22 @@ class GameWindow(arcade.Window):
         for i in range(len(self.lever_list)):
             if self.lever_list[i].pressed and not self.laser.state:
                 emitter = self.emitter_list[i]
-                shoot_laser(self.laser, emitter.properties['tile_id']-EMMIT_OFSET, emitter.position)
+                shoot_laser(self.laser, (EMIT_OFSET - emitter.properties['tile_id']), emitter.position)
+        
+        # Collector logic
+        if arcade.check_for_collision_with_list(self.laser, self.collector_list):
+            for collector in self.collector_list:
+                if arcade.check_for_collision(self.laser, collector):
+                    if self.laser.get_direction() == accepted_collector_dir(collector):
+                        collector.active = True
+            self.laser.state = False
+        
+        for i in self.collector_list:
+            if i.active == True:
+                print("yes")
+
+
+
         
 
     def on_draw(self):

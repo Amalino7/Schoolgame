@@ -74,11 +74,8 @@ REFL_DR = REFL_DL + 1
 REFL_UR = REFL_DL + 2
 REFL_UL = REFL_DL + 3
 
-# Emmiter constant
-EMMIT_OFSET = 38
+# Emitter constant
+EMIT_OFSET = 38
 
-# Collector ID
-COL_L = 1
-COL_R = COL_L + 1
-COL_U = COL_L + 2
-COL_D = COL_L + 3
+# Collector constant
+COLL_OFSET = 17
