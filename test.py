@@ -72,6 +72,8 @@ class GameWindow(arcade.Window):
         self.respawn_index=0
         self.enemy = None
         #add scene
+        self.physics_engine2 = None
+
         self.scene: arcade.Scene() = None
         # self.possible_jumps=2
         self.camera=None
@@ -90,22 +92,28 @@ class GameWindow(arcade.Window):
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
         cwd=os.getcwd()
-        map_name = f"{cwd}\TIledproject\hmm{self.level}.json"
+        map_name = f"{cwd}\Tiledproject\maps\level{self.level}.json"
         map_name = r'{}'.format(map_name)
-        try:
-            tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
-        except:
-            print("all levels are completed")
-            raise "ALL DONE"
+        # try:
+        tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
+        # except:
+            # print("all levels are completed")
+            # raise "ALL DONE"
 
          # Pull the sprite layers out of the tile map
-        self.wall_list = tile_map.sprite_lists["Platforms"]
+        self.wall_list = tile_map.sprite_lists["Red barriers"]
+        self.blue_barier = tile_map.sprite_lists["Blue barriers"]
         self.wall_list.enable_spatial_hashing()
         self.pushable_objects_list = tile_map.sprite_lists["Pushable Items"]
         self.item_list = tile_map.sprite_lists["Dynamic Items"]
-        self.ladder_list = tile_map.sprite_lists["Ladders"]
-        self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms']
+
+        # self.ladder_list = tile_map.sprite_lists["Ladders"]
+        # self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms'] Later
         self.background = tile_map.sprite_lists['Background']
+        self.background.extend(tile_map.sprite_lists['Clouds'])
+        self.background.extend(tile_map.sprite_lists['Ground'])
+        self.background.extend(tile_map.sprite_lists['Aboveground'])
+
         self.door_list = []
         self.spawn_points = tile_map.object_lists["Spawn"]
         self.finish_line = tile_map.sprite_lists["Finish_line"]
@@ -125,13 +133,20 @@ class GameWindow(arcade.Window):
             try:
                 for button1,button2 in zip(tile_map.sprite_lists[f"B{i+1}State1"],tile_map.sprite_lists[f"B{i+1}State2"]):
                     self.button_list.append(Button(button1,button2))
-                print("door added",flush=1)
                 i+=1
             except:
                 break
 
 
     def pymunk_collison_handler(self):
+        def func (player_sprite, item_sprite,_arbiter, _space, _data):
+            return False
+        def blue_hit_handler(player_sprite, item_sprite, _arbiter, _space, _data):
+            pass
+        self.physics_engine.add_collision_handler("bullet","blue",begin_handler=func,post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("push","blue",begin_handler=func,post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("enemy","blue",begin_handler=func,post_handler=blue_hit_handler)
+
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             if self.is_trying_to_take_object==True:
                 item_sprite.remove_from_sprite_lists()
@@ -145,7 +160,7 @@ class GameWindow(arcade.Window):
             bullet_sprite.remove_from_sprite_lists()
         self.physics_engine.add_collision_handler("bullet","enemy",post_handler= enemy_hit_handler)
         def player_hit_by_bullet(bullet_sprite, player_sprite, _arbiter, _space, _data):
-            if bullet_sprite.mode != "enemy":
+            if bullet_sprite.mode != "enemy" and bullet_sprite.mode!= "gone_wrong":
                 return
             player_sprite.HP-=1
             if player_sprite.HP<=1:
@@ -170,7 +185,6 @@ class GameWindow(arcade.Window):
             if enemy_sprite.attack_cooldown < 0:
                 enemy_sprite.attack_cooldown = 1
                 player_sprite.HP-=1
-                print(player_sprite.HP,flush=True)
                 if player_sprite.HP<=0:
                     self.setup()
         self.physics_engine.add_collision_handler("enemy", "player", post_handler=short_attack_enemy)
@@ -189,9 +203,10 @@ class GameWindow(arcade.Window):
 
         self.physics_engine.add_collision_handler("bullet", "item", post_handler=item_hit_handler)
 
-        def finish_line_reached(_player_sprite,_finish_line, _arbiter, _space, _data):
-            self.level+=1
-            self.setup()
+        def finish_line_reached(player_sprite,_finish_line, _arbiter, _space, _data):
+                self.player_sprite.kill()
+                self.level+=1
+                self.setup()
         self.physics_engine.add_collision_handler("player", "finish", post_handler=finish_line_reached)
 
     
@@ -230,7 +245,7 @@ class GameWindow(arcade.Window):
         # --- Pymunk Physics Engine Setup ---
         # The default damping for every object controls the percent of velocity
         # the object will keep each second. A value of 1.0 is no speed loss,
-        # 0.9 is 10% per second, 0.1 is 90% per second.
+        # 0.9 is 10% per second, 0.1 is 90% peFr second.
         # For top-down games, this is basically the friction for moving objects.
         # For platformers with gravity, this should probably be set to 1.0.
         # Default value is 1.0 if not specified.
@@ -241,7 +256,9 @@ class GameWindow(arcade.Window):
         # Create the physics engine
         self.physics_engine = arcade.PymunkPhysicsEngine(damping=damping,
                                                          gravity=gravity,)
-        
+        # self.physics_engine2.add_sprite_list(self.blue_barier,
+        #                                      collision_type="blue",
+        #                                      body_type=arcade.PymunkPhysicsEngine.STATIC)
         self.pymunk_collison_handler()
 
         self.physics_engine.add_sprite_list(self.pushable_objects_list,
@@ -269,16 +286,20 @@ class GameWindow(arcade.Window):
         #finish line handler
         self.physics_engine.add_sprite_list(self.finish_line,mass=1,collision_type="finish", body_type = arcade.PymunkPhysicsEngine.STATIC)
 
-
         self.physics_engine.add_sprite(self.player_sprite,
-                                    #    friction=PLAYER_FRICTION,
-                                       mass=PLAYER_MASS,
-                                       moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
-                                       collision_type="player",
-                                       elasticity=1,
-                                       max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
-                                       max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED)
+                                             mass=PLAYER_MASS,
+                                            moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
+                                            collision_type="player",
+                                            elasticity=1,
+                                            max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
+                                            max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED
+                                             )
+        self.physics_engine.add_sprite_list(self.blue_barier,
+                                             body_type=arcade.PymunkPhysicsEngine.STATIC
+                                            ,collision_type="blue"
+                                             )
 
+        
         # Create the walls.
         # By setting the body type to PymunkPhysicsEngine.STATIC the walls can't
         # move.
@@ -296,9 +317,10 @@ class GameWindow(arcade.Window):
                                             # friction=WALL_FRICTION,
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
+            
         # Add kinematic sprites
-        self.physics_engine.add_sprite_list(self.moving_sprites_list,
-                                            body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
+        # self.physics_engine.add_sprite_list(self.moving_sprites_list,
+        #                                     body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
 
         for enemy_path in self.enemy_paths:
             enemy = Enemy("new_assets/enemy/enemy",1,self.player_sprite,self.wall_list,enemy_path.shape)
@@ -330,7 +352,6 @@ class GameWindow(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
-
         if key == arcade.key.T:
             for point in self.spawn_points:
                 if self.player_sprite.collides_with_point(point.shape):
@@ -379,7 +400,6 @@ class GameWindow(arcade.Window):
             return
         if self.player_sprite.attack_cooldown > 0:
             return
-        
         self.player_sprite.attack_cooldown = ATTACK_COOLDOWN_TIME
         bullet = BulletSprite(":resources:images/space_shooter/laserBlue01.png",self.player_sprite,
                               x+self.camera.position.x,#camera offset
@@ -399,6 +419,12 @@ class GameWindow(arcade.Window):
         self.physics_engine.apply_force(bullet, force)
 
     def on_update(self, delta_time):
+        # if self.player_sprite.collides_with_list(self.blue_barier):
+        #     print("hahdhsau",flush=True)
+        #     self.player_sprite.
+            # self.physics_engine.set_position(self.player_sprite,
+            #                                  (-self.player_sprite.velocity[0],
+            #                                   -self.player_sprite.velocity[1]))
         for enemy in self.enemy_list:
             enemy.on_update(self.physics_engine,delta_time,self.bullet_list)
         self.friend.on_update()
@@ -467,32 +493,31 @@ class GameWindow(arcade.Window):
         self.physics_engine.apply_force(self.player_sprite, force)#apply all the force
         # Move items in the physics engine
         self.physics_engine.step()
-
         # For each moving sprite, see if we've reached a boundary and need to
         # reverse course.
-        for moving_sprite in self.moving_sprites_list:
-            if moving_sprite.boundary_right and \
-                    moving_sprite.change_x > 0 and \
-                    moving_sprite.right > moving_sprite.boundary_right:
-                moving_sprite.change_x *= -1
-            elif moving_sprite.boundary_left and \
-                    moving_sprite.change_x < 0 and \
-                    moving_sprite.left > moving_sprite.boundary_left:
-                moving_sprite.change_x *= -1
-            if moving_sprite.boundary_top and \
-                    moving_sprite.change_y > 0 and \
-                    moving_sprite.top > moving_sprite.boundary_top:
-                moving_sprite.change_y *= -1
-            elif moving_sprite.boundary_bottom and \
-                    moving_sprite.change_y < 0 and \
-                    moving_sprite.bottom < moving_sprite.boundary_bottom:
-                moving_sprite.change_y *= -1
+        # for moving_sprite in self.moving_sprites_list:
+        #     if moving_sprite.boundary_right and \
+        #             moving_sprite.change_x > 0 and \
+        #             moving_sprite.right > moving_sprite.boundary_right:
+        #         moving_sprite.change_x *= -1
+        #     elif moving_sprite.boundary_left and \
+        #             moving_sprite.change_x < 0 and \
+        #             moving_sprite.left > moving_sprite.boundary_left:
+        #         moving_sprite.change_x *= -1
+        #     if moving_sprite.boundary_top and \
+        #             moving_sprite.change_y > 0 and \
+        #             moving_sprite.top > moving_sprite.boundary_top:
+        #         moving_sprite.change_y *= -1
+        #     elif moving_sprite.boundary_bottom and \
+        #             moving_sprite.change_y < 0 and \
+        #             moving_sprite.bottom < moving_sprite.boundary_bottom:
+        #         moving_sprite.change_y *= -1
 
-            # Figure out and set our moving platform velocity.
-            # Pymunk uses velocity is in pixels per second. If we instead have
-            # pixels per frame, we need to convert.
-            velocity = (moving_sprite.change_x * 1 / delta_time, moving_sprite.change_y * 1 / delta_time)
-            self.physics_engine.set_velocity(moving_sprite, velocity)
+        #     # Figure out and set our moving platform velocity.
+        #     # Pymunk uses velocity is in pixels per second. If we instead have
+        #     # pixels per frame, we need to convert.
+        #     velocity = (moving_sprite.change_x * 1 / delta_time, moving_sprite.change_y * 1 / delta_time)
+        #     self.physics_engine.set_velocity(moving_sprite, velocity)
         
         self.center_camera_to_player()
 
@@ -503,9 +528,10 @@ class GameWindow(arcade.Window):
         self.background.draw()
         drawButtons(self.button_list)
         self.wall_list.draw()
+        self.blue_barier.draw()
         self.pushable_objects_list.draw()
         # self.ladder_list.draw()
-        self.moving_sprites_list.draw()
+        # self.moving_sprites_list.draw()
         self.bullet_list.draw()
         self.item_list.draw()
         self.player_list.draw()

@@ -5,7 +5,7 @@ SPRITE_IMAGE_SIZE = 128
 
 # Scale sprites up or down
 SPRITE_SCALING_PLAYER = 1
-SPRITE_SCALING_TILES = 2
+SPRITE_SCALING_TILES = 1/2
 
 # Scaled sprite size for tiles
 SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
@@ -40,7 +40,6 @@ PLAYER_MOVE_FORCE_ON_GROUND = 1800
 # Force applied when moving left/right in the air
 PLAYER_MOVE_FORCE_IN_AIR = 900
 
-# Strength of a jump
 # PLAYER_JUMP_IMPULSE = 1800
 
 # Close enough to not-moving to have the animation go to idle.
@@ -55,6 +54,9 @@ FRONT_FACING = 3
 # How many pixels to move before we change the texture in the walking animation
 DISTANCE_TO_CHANGE_TEXTURE = 50
 
+#size of tile
+TILE_SIZE = 64
+
 # How much force to put on the bullet
 BULLET_MOVE_FORCE = 4500
 
@@ -64,7 +66,8 @@ BULLET_MASS = 0.1
 # Make bullet less affected by gravity
 BULLET_GRAVITY = 300
 
-DIST_UNTIL_BACKFIRE = 10000000000
+DIST_UNTIL_BACKFIRE = 200
+DIST_UNTIL_DISAPPEAR = 1000
 ENEMY_SPEED = 10
 FOLLOW_SPEED = 3
 FORCE_FOR_MOVEMENT= 100
@@ -77,4 +80,4 @@ BULLET_MOVE_TICK = 15
 
 FORCE_MULTIPLR = 10
 
-ATTACK_COOLDOWN_TIME=0.1
+ATTACK_COOLDOWN_TIME = 0.1

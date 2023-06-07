@@ -32,7 +32,7 @@ class Friend(arcade.Sprite):
         self.character_face_direction_y = FRONT_FACING
 
         """Other things"""
-        self.barrier_list = arcade.AStarBarrierList(self, wall_list, 31, -2000, 5000, -2000, 2000)
+        self.barrier_list = arcade.AStarBarrierList(self, wall_list, TILE_SIZE, -16000, 16000, -16000, 16000)
         self.path = None
         self.player_sprite = player_sprite
         self.cur_mode = 1
@@ -149,7 +149,7 @@ class Enemy(arcade.Sprite):
         self.center_y = self.static_path[0][1]
         self.cur_dir=1
         self.player_sprite:Optional[PlayerSprite]=player_sprite
-        self.barrier_list = arcade.AStarBarrierList(self, wall_list, 31, -5000, 15000, -5000, 5000)
+        self.barrier_list = arcade.AStarBarrierList(self, wall_list, TILE_SIZE, -16000, 16000, -16000, 16000)
         self.time_in_sight = 0
         self.hp = 10
         self.attack_cooldown=0
@@ -281,7 +281,7 @@ class Enemy(arcade.Sprite):
 class BulletSprite(arcade.Sprite):
     """ Bullet Sprite """
     def __init__(self, image, player_sprite,direction_x,direction_y,mode):
-        self.player_sprite=player_sprite
+        self.player_sprite:Optional[arcade.Sprite]=player_sprite
         self.dist=0
         self.mode =mode
         #"enemy"
@@ -316,7 +316,36 @@ class BulletSprite(arcade.Sprite):
 
         # Set angle of bullet
         self.angle = math.degrees(angle)
-    
+
     def pymunk_moved(self, physics_engine:arcade.PymunkPhysicsEngine, dx, dy, d_angle):
         """ Handle when the sprite is moved by the physics engine. """
         # If the bullet falls below the screen, remove it
+        self.dist+=abs(dx)+abs(dy) 
+        if self.dist>DIST_UNTIL_DISAPPEAR:
+            try:
+                self.remove_from_sprite_lists()
+            except:
+                print("bruh here",flush=True)
+            return 
+        
+        if self.dist>DIST_UNTIL_BACKFIRE and self.mode!="gone_wrong":
+            self.mode="gone_wrong"
+            physics_engine.set_velocity(self,(0,0))
+        if self.mode == "gone_wrong":
+            x_diff = self.player_sprite.center_x - self.center_x
+            y_diff = self.player_sprite.center_y - self.center_y
+            angle=0
+            if int(x_diff)!=0:
+                angle = math.atan2(y_diff, x_diff)
+            else:
+                if y_diff>0:
+                    angle = math.pi/2
+                else:
+                    angle = -math.pi/2
+            physics_engine.rotate(self,angle)
+            physics_engine.set_velocity(self,(0,0))
+            physics_engine.apply_impulse(self,(20,0))
+            
+        
+
+    
