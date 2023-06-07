@@ -198,7 +198,7 @@ class GameWindow(arcade.Window):
     def reload(self):
         """death screen maybe later"""
         for enemy in self.enemy_list:
-            enemy.reload(self.physics_enginea)
+            enemy.reload(self.physics_engine)
         self.impersonating = False
         self.respawn_point = self.spawn_points[self.respawn_index]
         self.physics_engine.set_position(self.player_sprite,self.respawn_point.shape)
@@ -250,7 +250,7 @@ class GameWindow(arcade.Window):
                                             moment_of_intertia=arcade.PymunkPhysicsEngine.MOMENT_INF,
                                             body_type=arcade.PymunkPhysicsEngine.DYNAMIC)
         
-        self.friend=Friend(":resources:images/items/coinGold.png", 0.5,self.wall_list,self.player_sprite)
+        self.friend=Friend("new_assets/friend/fairy", 0.5,self.wall_list,self.player_sprite)
 
         self.friend.center_x = self.respawn_point.shape[0]+50
         self.friend.center_y = self.respawn_point.shape[1]+50
@@ -301,8 +301,7 @@ class GameWindow(arcade.Window):
                                             body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
 
         for enemy_path in self.enemy_paths:
-            enemy = Enemy(":resources:images/animated_characters/female_person/femalePerson_idle.png",
-                                    0.5,self.player_sprite,self.wall_list,enemy_path.shape)
+            enemy = Enemy("new_assets/enemy/enemy",1,self.player_sprite,self.wall_list,enemy_path.shape)
             self.enemy_list.append(enemy)
             self.physics_engine.add_sprite(
                                     enemy,
