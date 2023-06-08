@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.10.1" name="interactable_objects" tilewidth="256" tileheight="256" tilecount="20" columns="0">
+<tileset version="1.10" tiledversion="1.10.1" name="interactable_objects" tilewidth="256" tileheight="256" tilecount="22" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image width="256" height="256" source="../image_collection/box.png"/>
@@ -60,5 +60,11 @@
  </tile>
  <tile id="19">
   <image width="256" height="256" source="../image_collection/reflector_4.png"/>
+ </tile>
+ <tile id="29">
+  <image width="256" height="256" source="../lever/lever_1.png"/>
+ </tile>
+ <tile id="30">
+  <image width="256" height="256" source="../lever/lever_7.png"/>
  </tile>
 </tileset>
