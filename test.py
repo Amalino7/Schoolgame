@@ -120,6 +120,7 @@ class GameWindow(arcade.Window):
         self.player_sprite: Optional[PlayerSprite] = None
         self.level = 1 #level
         self.end_of_map = 0  #indicate endpoint
+        self.laser_state=None
         # Sprite lists we need
         self.background: Optional[arcade.SpriteList] = None
         self.end_points: Optional[arcade.SpriteList] = None
@@ -307,12 +308,6 @@ class GameWindow(arcade.Window):
                 self.impersonating = True
             bullet_sprite.remove_from_sprite_lists()
         self.physics_engine.add_collision_handler("bullet", "push", post_handler=push_hit_handler)
-
-        def item_hit_handler(bullet_sprite, item_sprite, _arbiter, _space, _data):
-            """ Called for bullet/wall collision """
-            bullet_sprite.remove_from_sprite_lists()
-            item_sprite.remove_from_sprite_lists()
-
         
 
         def key_hit_by_player_handler(player_sprite, key_sprite, _arbiter, _space, _data):
@@ -339,7 +334,8 @@ class GameWindow(arcade.Window):
         
         self.physics_engine.add_collision_handler("player", "key" , post_handler=key_hit_by_player_handler)
         self.physics_engine.add_collision_handler("bullet", "key", post_handler=push_hit_handler)
-    
+        self.physics_engine.add_collision_handler("player", "locked door", post_handler=locked_door_hit_by_player_handler)
+        self.physics_engine.add_collision_handler("bullet", "locked door", post_handler=wall_hit_handler)
     def reload(self):
         """death screen maybe later"""
         for enemy in self.enemy_list:
@@ -411,7 +407,7 @@ class GameWindow(arcade.Window):
         # Friction is between two objects in contact. It is important to remember
         # in top-down games that friction moving along the 'floor' is controlled
         # by damping.
-
+        self.laser = Laser(":resources:images/space_shooter/laserBlue01.png", 1.0, self.player_sprite.position)
         self.physics_engine.add_sprite_list(self.end_points,
                                             mass=1,
                                             collision_type="end",
@@ -455,8 +451,8 @@ class GameWindow(arcade.Window):
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
 
         # Add kinematic sprites
-        self.physics_engine.add_sprite_list(self.moving_sprites_list,
-                                            body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
+        # self.physics_engine.add_sprite_list(self.moving_sprites_list,
+        #                                     body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
         
         self.physics_engine.add_sprite_list(self.keys,
                                             mass=100,

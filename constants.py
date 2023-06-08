@@ -20,7 +20,7 @@ SCREEN_HEIGHT = root.winfo_screenheight()
 
 # Damping - Amount of speed lost per second
 DEFAULT_DAMPING = 0.1
-PLAYER_DAMPING = 0.5
+PLAYER_DAMPING = 0.2
 
 # Friction between objects
 # PLAYER_FRICTION = 1.0
