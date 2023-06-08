@@ -20,7 +20,7 @@ SCREEN_HEIGHT = root.winfo_screenheight()
 
 # Damping - Amount of speed lost per second
 DEFAULT_DAMPING = 0.1
-PLAYER_DAMPING = 0.5
+PLAYER_DAMPING = 0.2
 
 # Friction between objects
 # PLAYER_FRICTION = 1.0
@@ -40,14 +40,14 @@ PLAYER_MOVE_FORCE_ON_GROUND = 1800
 # Close enough to not-moving to have the animation go to idle.
 DEAD_ZONE = 0.1
 
-# Constants used to track if the player is facing left or right
+#Facing
 RIGHT_FACING = 0
 LEFT_FACING = 1
-BACK_FACING = 2
-FRONT_FACING = 3
+FRONT_FACING=2
+BACK_FACING=3
 
 # How many pixels to move before we change the texture in the walking animation
-DISTANCE_TO_CHANGE_TEXTURE = 50
+DISTANCE_TO_CHANGE_TEXTURE = 20
 
 #size of tile
 TILE_SIZE = 64
@@ -64,6 +64,24 @@ ENEMY_SPEED = 10
 FOLLOW_SPEED = 3
 FORCE_FOR_MOVEMENT= 100
 
+
+# Navigation speed
+SPRITE_SPEED = 3
+
+# Laser speed
+LASER_SPEED = 5
+
+# Reflector ID
+REFL_DL = 47
+REFL_DR = REFL_DL + 1
+REFL_UR = REFL_DL + 2
+REFL_UL = REFL_DL + 3
+
+# Emitter constant
+EMIT_OFSET = 38
+
+# Collector constant
+COLL_OFSET = 17
 
 TIME_TO_SEE = 1
 
