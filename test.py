@@ -290,6 +290,7 @@ class GameWindow(arcade.Window):
                                              mass=PLAYER_MASS,
                                             moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
                                             collision_type="player",
+                                            damping=PLAYER_DAMPING,
                                             elasticity=1,
                                             max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
                                             max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED

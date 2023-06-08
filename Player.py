@@ -11,7 +11,6 @@ class PlayerSprite(arcade.Sprite):
         self.attack_cooldown = 0
         # Let parent initialize
         super().__init__()
-
         # Set our scale
         self.scale = SPRITE_SCALING_PLAYER
         main_path = "other_assets\magus\magus"
@@ -46,8 +45,6 @@ class PlayerSprite(arcade.Sprite):
         self.y_odometer = 0
 
         self.item_list=item_list
-        # self.ladder_list = ladder_list
-        self.is_on_ladder = False
         self.score = 0
 
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
