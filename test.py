@@ -61,6 +61,7 @@ class Collector(arcade.Sprite):
         super().__init__(texture=image,center_x=x,center_y=y)
         self.active = False
         self.tile_id = tile_id
+        self.is_door_in_Pengine = True
 
 
 def accepted_collector_dir(collector):
@@ -205,6 +206,7 @@ class GameWindow(arcade.Window):
         for sprite in tile_map.sprite_lists['Collectors']:
             tmp_collect=Collector(sprite.texture,sprite.center_x,sprite.center_y, sprite.properties['tile_id'])
             self.collector_list.append(tmp_collect)
+        self.collector_door_list = tile_map.sprite_lists['Collector Doors']
         
         self.door_list = []
         self.spawn_points = tile_map.object_lists["Spawn"]
@@ -468,6 +470,10 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_sprite_list(self.collector_list,
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
+        
+        self.physics_engine.add_sprite_list(self.collector_door_list,
+                                            collision_type="wall",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
 
         # Add kinematic sprites
         # self.physics_engine.add_sprite_list(self.moving_sprites_list,
@@ -541,14 +547,7 @@ class GameWindow(arcade.Window):
             self.is_trying_to_take_object=True
 
         if key == arcade.key.L:
-            self.laser.change_direction(self.laser.get_direction()+1)
-        if key == arcade.key.K:
-            self.laser.change_direction(self.laser.get_direction()-1)
-        if key == arcade.key.J and not self.laser.state:
-            test = None
-            for i in self.emitter_list:
-                test = i .position
-            shoot_laser(self.laser, 0, test)
+            self.collector_list[0].active = True
 
 
         if key == arcade.key.LEFT or key == arcade.key.A:
@@ -789,6 +788,13 @@ class GameWindow(arcade.Window):
 
         self.reflector_list.draw()
         self.emitter_list.draw()
+        for i in range(len(self.collector_door_list)):
+            if not self.collector_list[i].active:
+                self.collector_door_list[i].draw()
+            elif self.collector_list[i].is_door_in_Pengine:
+                self.physics_engine.remove_sprite(self.collector_door_list[i])
+                self.collector_list[i].is_door_in_Pengine = False
+
         if self.laser.state:
             self.laser.draw()
 
