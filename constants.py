@@ -37,11 +37,6 @@ PLAYER_MAX_VERTICAL_SPEED = 1950
 # Force applied while on the ground
 PLAYER_MOVE_FORCE_ON_GROUND = 1800
 
-# Force applied when moving left/right in the air
-PLAYER_MOVE_FORCE_IN_AIR = 900
-
-# PLAYER_JUMP_IMPULSE = 1800
-
 # Close enough to not-moving to have the animation go to idle.
 DEAD_ZONE = 0.1
 
@@ -63,16 +58,12 @@ BULLET_MOVE_FORCE = 4500
 # Mass of the bullet
 BULLET_MASS = 0.1
 
-# Make bullet less affected by gravity
-BULLET_GRAVITY = 300
-
-DIST_UNTIL_BACKFIRE = 200
-DIST_UNTIL_DISAPPEAR = 1000
+DIST_UNTIL_BACKFIRE = 1000
+DIST_UNTIL_DISAPPEAR = 10000
 ENEMY_SPEED = 10
 FOLLOW_SPEED = 3
 FORCE_FOR_MOVEMENT= 100
 
-CLOSE_ENOUGH = 0.1
 
 TIME_TO_SEE = 1
 

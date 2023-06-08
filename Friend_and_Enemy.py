@@ -149,7 +149,7 @@ class Enemy(arcade.Sprite):
         self.center_y = self.static_path[0][1]
         self.cur_dir=1
         self.player_sprite:Optional[PlayerSprite]=player_sprite
-        self.barrier_list = arcade.AStarBarrierList(self, wall_list, TILE_SIZE, -16000, 16000, -16000, 16000)
+        #self.barrier_list = arcade.AStarBarrierList(self, wall_list, TILE_SIZE, -16000, 16000, -16000, 16000)
         self.time_in_sight = 0
         self.hp = 10
         self.attack_cooldown=0
@@ -325,7 +325,7 @@ class BulletSprite(arcade.Sprite):
             try:
                 self.remove_from_sprite_lists()
             except:
-                print("bruh here",flush=True)
+                print("Issue to fix later",flush=True)
             return 
         
         if self.dist>DIST_UNTIL_BACKFIRE and self.mode!="gone_wrong":
