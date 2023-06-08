@@ -418,6 +418,11 @@ class GameWindow(arcade.Window):
                                             # friction=WALL_FRICTION,
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
+        
+        self.physics_engine.add_sprite_list(self.collector_list,
+                                            collision_type="wall",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+
         # Add kinematic sprites
         self.physics_engine.add_sprite_list(self.moving_sprites_list,
                                             body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
@@ -728,14 +733,7 @@ class GameWindow(arcade.Window):
                     if self.laser.get_direction() == accepted_collector_dir(collector):
                         collector.active = True
             self.laser.state = False
-        
-        for i in self.collector_list:
-            if i.active == True:
-                print("yes")
 
-
-
-        
 
     def on_draw(self):
         """ Draw everything """
