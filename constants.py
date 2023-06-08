@@ -4,8 +4,8 @@ SCREEN_TITLE = "Clumsy Magus"
 SPRITE_IMAGE_SIZE = 128
 
 # Scale sprites up or down
-SPRITE_SCALING_PLAYER = 0.5
-SPRITE_SCALING_TILES = 2
+SPRITE_SCALING_PLAYER = 1
+SPRITE_SCALING_TILES = 1/2
 
 # Scaled sprite size for tiles
 SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
@@ -13,7 +13,7 @@ SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
 # Size of screen to show, in pixels
 root = tk.Tk()
 SCREEN_WIDTH = root.winfo_screenwidth()
-SCREEN_HEIGHT = root.winfo_screenheight()
+SCREEN_HEIGHT = root.winfo_screenheight() 
 
 # --- Physics forces. Higher number, faster accelerating.
 
@@ -37,21 +37,20 @@ PLAYER_MAX_VERTICAL_SPEED = 1950
 # Force applied while on the ground
 PLAYER_MOVE_FORCE_ON_GROUND = 1800
 
-# Force applied when moving left/right in the air
-PLAYER_MOVE_FORCE_IN_AIR = 900
-
-# Strength of a jump
-# PLAYER_JUMP_IMPULSE = 1800
-
 # Close enough to not-moving to have the animation go to idle.
 DEAD_ZONE = 0.1
 
-# Constants used to track if the player is facing left or right
+#Facing
 RIGHT_FACING = 0
 LEFT_FACING = 1
+FRONT_FACING=2
+BACK_FACING=3
 
 # How many pixels to move before we change the texture in the walking animation
 DISTANCE_TO_CHANGE_TEXTURE = 20
+
+#size of tile
+TILE_SIZE = 64
 
 # How much force to put on the bullet
 BULLET_MOVE_FORCE = 4500
@@ -59,8 +58,12 @@ BULLET_MOVE_FORCE = 4500
 # Mass of the bullet
 BULLET_MASS = 0.1
 
-# Make bullet less affected by gravity
-BULLET_GRAVITY = 300
+DIST_UNTIL_BACKFIRE = 1000
+DIST_UNTIL_DISAPPEAR = 10000
+ENEMY_SPEED = 10
+FOLLOW_SPEED = 3
+FORCE_FOR_MOVEMENT= 100
+
 
 # Navigation speed
 SPRITE_SPEED = 3
@@ -79,3 +82,11 @@ EMIT_OFSET = 38
 
 # Collector constant
 COLL_OFSET = 17
+
+TIME_TO_SEE = 1
+
+BULLET_MOVE_TICK = 15
+
+FORCE_MULTIPLR = 10
+
+ATTACK_COOLDOWN_TIME = 0.1
