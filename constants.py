@@ -47,7 +47,7 @@ FRONT_FACING=2
 BACK_FACING=3
 
 # How many pixels to move before we change the texture in the walking animation
-DISTANCE_TO_CHANGE_TEXTURE = 20
+DISTANCE_TO_CHANGE_TEXTURE = 50
 
 #size of tile
 TILE_SIZE = 64
@@ -72,16 +72,16 @@ SPRITE_SPEED = 3
 LASER_SPEED = 5
 
 # Reflector ID
-REFL_DL = 47
+REFL_DL = 16
 REFL_DR = REFL_DL + 1
 REFL_UR = REFL_DL + 2
 REFL_UL = REFL_DL + 3
 
 # Emitter constant
-EMIT_OFSET = 38
+EMIT_OFSET = 7
 
 # Collector constant
-COLL_OFSET = 17
+COLL_OFSET = 3
 
 TIME_TO_SEE = 1
 

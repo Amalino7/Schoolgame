@@ -8,6 +8,7 @@ import os
 from Player import *
 from constants import *
 import random
+from Friend_and_Enemy import *
 
 class Laser(arcade.Sprite):
     def __init__(self, image, scale, position):
@@ -85,8 +86,6 @@ def drawLevers(leverlist):
     for lever in leverlist:
         lever.mainsprite.draw()
 
-from Friend_and_Enemy import *
-
 class Button():
     def __init__(self, sprite1,sprite2):
         self.sprite1=sprite1
@@ -121,6 +120,8 @@ class GameWindow(arcade.Window):
         self.level = 1 #level
         self.end_of_map = 0  #indicate endpoint
         self.laser_state=None
+        self.left_gui = 550
+
         # Sprite lists we need
         self.background: Optional[arcade.SpriteList] = None
         self.end_points: Optional[arcade.SpriteList] = None
@@ -133,6 +134,7 @@ class GameWindow(arcade.Window):
         self.moving_sprites_list: Optional[arcade.SpriteList] = None
         self.ladder_list: Optional[arcade.SpriteList] = None
         self.pushable_objects_list: Optional[arcade.SpriteList] = None
+        self.storage: Optional[arcade.SpriteList] = None
 
         self.reflector_list: Optional[arcade.SpriteList] = None
         self.emitter_list: Optional[arcade.SpriteList] = None
@@ -170,6 +172,7 @@ class GameWindow(arcade.Window):
         self.keycount = 0
         self.buffer: bool = False
         self.laser_collision: bool = True
+        self.loading = False
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
     def tilemap_load(self):
@@ -177,7 +180,7 @@ class GameWindow(arcade.Window):
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
         cwd=os.getcwd()
-        map_name = f"{cwd}\Tiledproject\maps\level{self.level}.json"
+        map_name = f"{cwd}\Tiledproject\maps\level{self.level+1}.json"
         map_name = r'{}'.format(map_name)
         # try:
         tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
@@ -191,7 +194,6 @@ class GameWindow(arcade.Window):
         self.wall_list.enable_spatial_hashing()
         self.pushable_objects_list = tile_map.sprite_lists["Pushable Items"]
         self.item_list = tile_map.sprite_lists["Dynamic Items"]
-
         # self.ladder_list = tile_map.sprite_lists["Ladders"]
         # self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms'] Later
         self.background = tile_map.sprite_lists['Background']
@@ -252,12 +254,19 @@ class GameWindow(arcade.Window):
         self.bullet_list = arcade.SpriteList()
 
     def pymunk_collison_handler(self):
+        def box_checker(player_sprite, item_sprite,_arbiter, _space, _data):
+            if self.player_sprite == player_sprite:
+                return False
+            return True 
         def func (player_sprite, item_sprite,_arbiter, _space, _data):
             return False
         def blue_hit_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             pass
+        #noclip
+        # self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
+
         self.physics_engine.add_collision_handler("bullet","blue",begin_handler=func,post_handler=blue_hit_handler)
-        self.physics_engine.add_collision_handler("push","blue",begin_handler=func,post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("push","blue",begin_handler=box_checker,post_handler=blue_hit_handler)
         self.physics_engine.add_collision_handler("enemy","blue",begin_handler=func,post_handler=blue_hit_handler)
 
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
@@ -310,12 +319,17 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_collision_handler("bullet", "push", post_handler=push_hit_handler)
         
 
-        def key_hit_by_player_handler(player_sprite, key_sprite, _arbiter, _space, _data):
+        def key_hit_by_player_handler(player_sprite, key_sprite:arcade.Sprite, _arbiter, _space, _data):
             if self.is_trying_to_take_object == True:
                 print(key_sprite.properties['tile_id'])
                 key_sprite.remove_from_sprite_lists()
                 self.held_keys.append(key_sprite)
                 self.keycount += 1
+                self.storage.append(key_sprite)
+                key_sprite.scale = 30/key_sprite.height
+                key_sprite.center_x = self.left_gui
+                key_sprite.center_y = key_sprite.height/2
+                self.left_gui += key_sprite.width
         
         def locked_door_hit_by_player_handler(player_sprite, locked_door_sprite, _arbiter, _space, _data):
             if self.is_trying_to_take_object == True:
@@ -327,9 +341,11 @@ class GameWindow(arcade.Window):
 
 
         def finish_line_reached(player_sprite,_finish_line, _arbiter, _space, _data):
-                self.player_sprite.kill()
+                player_sprite.kill()
+                self.loading = True
                 self.level+=1
                 self.setup()
+                self.loading = False
         self.physics_engine.add_collision_handler("player", "finish", post_handler=finish_line_reached)
         
         self.physics_engine.add_collision_handler("player", "key" , post_handler=key_hit_by_player_handler)
@@ -356,6 +372,7 @@ class GameWindow(arcade.Window):
         self.player_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
         self.enemy_list  = arcade.SpriteList()
+        self.storage = arcade.SpriteList()
 
         self.camera=arcade.Camera(self.width,self.height)
         self.gui_camera = arcade.Camera(self.width, self.height)
@@ -394,7 +411,6 @@ class GameWindow(arcade.Window):
                                             body_type=arcade.PymunkPhysicsEngine.DYNAMIC)
         
         self.friend=Friend("new_assets/friend/fairy", 0.5,self.wall_list,self.player_sprite)
-
         self.friend.center_x = self.respawn_point.shape[0]+50
         self.friend.center_y = self.respawn_point.shape[1]+50
         # Add the player.
@@ -413,6 +429,9 @@ class GameWindow(arcade.Window):
                                             collision_type="end",
                                             body_type = arcade.PymunkPhysicsEngine.STATIC)
 
+        self.physics_engine.add_sprite_list(self.finish_line,
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC,
+                                            collision_type="finish")
         self.physics_engine.add_sprite(self.player_sprite,
                                              mass=PLAYER_MASS,
                                             moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
@@ -594,6 +613,8 @@ class GameWindow(arcade.Window):
 
 
     def on_update(self, delta_time):
+        if self.loading ==True:
+            return
         # if self.player_sprite.collides_with_list(self.blue_barier):
         #     print("hahdhsau",flush=True)
         #     self.player_sprite.
@@ -670,16 +691,16 @@ class GameWindow(arcade.Window):
         elif self.down_pressed and not self.up_pressed:
             force[1] = -PLAYER_MOVE_FORCE_ON_GROUND
             tmp_friction = 0
-        #if self.impersonating == True:
-            #force[0]/=3 #lower Movement
-            #force[1]/=3
+        if self.impersonating == True:
+            force[0]/=3 #lower Movement
+            force[1]/=3
             
-            #x_offset = 0
-            #y_offset = 0    
-            #x_offset = random.randrange(-PLAYER_MOVE_FORCE_ON_GROUND,PLAYER_MOVE_FORCE_ON_GROUND,1)
-            #y_offset = random.randrange(-PLAYER_MOVE_FORCE_ON_GROUND,PLAYER_MOVE_FORCE_ON_GROUND,1)
-            #force[0]+= x_offset
-            #force[1]+= y_offset
+            x_offset = 0
+            y_offset = 0    
+            x_offset = random.randrange(-PLAYER_MOVE_FORCE_ON_GROUND,PLAYER_MOVE_FORCE_ON_GROUND,1)
+            y_offset = random.randrange(-PLAYER_MOVE_FORCE_ON_GROUND,PLAYER_MOVE_FORCE_ON_GROUND,1)
+            force[0]+= x_offset
+            force[1]+= y_offset
         self.physics_engine.set_friction(self.player_sprite, tmp_friction)
         force=tuple(force)
         self.physics_engine.apply_force(self.player_sprite, force)#apply all the force
@@ -791,14 +812,15 @@ class GameWindow(arcade.Window):
         if self.impersonating == True:
             score_text = f"Score: {self.player_sprite_old.score} Mode is {self.mode} Respawn:{self.respawn_index}"
         else:
-            score_text = f"Score: {self.player_sprite.score} Mode is {self.mode} Respawn:{self.respawn_index} Keys:{self.keycount}"
+            score_text = f"Score: {self.player_sprite.score} Mode is {self.mode} Respawn:{self.respawn_index}"
         arcade.draw_text(
             score_text,
             30,
-            50,
+            10,
             arcade.csscolor.WHITE,
-            18,
+            25,
        )
+        self.storage.draw()
 def main():
     """ Main function """
     window = GameWindow(SCREEN_WIDTH-30, SCREEN_HEIGHT-30, SCREEN_TITLE)
