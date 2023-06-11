@@ -138,8 +138,6 @@ class GameWindow(arcade.Window):
         self.storage: Optional[arcade.SpriteList] = None
 
         self.reflector_list: Optional[arcade.SpriteList] = None
-        self.emitter_list: Optional[arcade.SpriteList] = None
-        self.collector_list: Optional[arcade.SpriteList] = None
 
         self.door_list = None
         self.is_trying_to_take_object: bool=False
@@ -201,14 +199,11 @@ class GameWindow(arcade.Window):
         self.keys = tile_map.sprite_lists['Keys']
         self.locked_doors = tile_map.sprite_lists['Locked_Doors']
         self.reflector_list = tile_map.sprite_lists['Reflectors']
-        self.emitter_list = tile_map.sprite_lists['Emitters']
+
         self.collector_list = arcade.SpriteList()
-        for sprite in tile_map.sprite_lists['Collectors']:
-            tmp_collect=Collector(sprite.texture,sprite.center_x,sprite.center_y, sprite.properties['tile_id'])
-            self.collector_list.append(tmp_collect)
-        self.collector_door_list = tile_map.sprite_lists['Collector Doors']
-        
         self.door_list = []
+        self.emitter_list = []
+        self.collector_door_list = []
         self.spawn_points = tile_map.object_lists["Spawn"]
 
 
@@ -219,6 +214,35 @@ class GameWindow(arcade.Window):
         self.spawn_points = tile_map.object_lists["Spawn"]
         self.finish_line = tile_map.sprite_lists["Finish_line"]
         self.enemy_paths = tile_map.object_lists["Enemy"]
+
+        i=0
+        while True:
+            try:
+                for sprite in tile_map.sprite_lists[f"Collector{i+1}"]:
+                    tmp_collect=Collector(sprite.texture,sprite.center_x,sprite.center_y, sprite.properties['tile_id'])
+                    self.collector_list.append(tmp_collect)
+                    print("collector added")
+                i+=1
+            except:
+                break
+
+        i=0
+        while True:
+            try:
+                self.collector_door_list.append(tile_map.sprite_lists[f"CDoor{i+1}"])
+                print("Collector door added")
+                i+=1
+            except:
+                break
+
+        i=0
+        while True:
+            try:
+                self.emitter_list.append(tile_map.sprite_lists[f"Emitter{i+1}"])
+                i+=1
+            except:
+                break
+
         i=0
         while True:
             try:
@@ -265,7 +289,7 @@ class GameWindow(arcade.Window):
         def blue_hit_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             pass
         #noclip
-        # self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
+        #self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
 
         self.physics_engine.add_collision_handler("bullet","blue",begin_handler=func,post_handler=blue_hit_handler)
         self.physics_engine.add_collision_handler("push","blue",begin_handler=box_checker,post_handler=blue_hit_handler)
@@ -471,9 +495,10 @@ class GameWindow(arcade.Window):
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
         
-        self.physics_engine.add_sprite_list(self.collector_door_list,
-                                            collision_type="wall",
-                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+        for collector_door in self.collector_door_list:
+            self.physics_engine.add_sprite_list(collector_door,
+                                                collision_type="wall",
+                                                body_type=arcade.PymunkPhysicsEngine.STATIC)
 
         # Add kinematic sprites
         # self.physics_engine.add_sprite_list(self.moving_sprites_list,
@@ -510,9 +535,10 @@ class GameWindow(arcade.Window):
                                             body_type=arcade.PymunkPhysicsEngine.DYNAMIC,
                                             mass=10)
         
-        self.physics_engine.add_sprite_list(self.emitter_list,
-                                            collision_type="wall",
-                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+        for emitter in self.emitter_list:
+            self.physics_engine.add_sprite_list(emitter,
+                                                collision_type="wall",
+                                                body_type=arcade.PymunkPhysicsEngine.STATIC)
 
 
         # Make enemy
@@ -756,7 +782,7 @@ class GameWindow(arcade.Window):
         # Lever/Emmiter logic
         for i in range(len(self.lever_list)):
             if self.lever_list[i].pressed and not self.laser.state:
-                emitter = self.emitter_list[i]
+                emitter = self.emitter_list[i][0]
                 shoot_laser(self.laser, (EMIT_OFSET - emitter.properties['tile_id']), emitter.position)
         
         # Collector logic
@@ -787,13 +813,20 @@ class GameWindow(arcade.Window):
         self.locked_doors.draw()
 
         self.reflector_list.draw()
-        self.emitter_list.draw()
-        for i in range(len(self.collector_door_list)):
+        for emitter in self.emitter_list:
+            emitter.draw()
+
+        i=0
+        for collector_door in self.collector_door_list:
             if not self.collector_list[i].active:
-                self.collector_door_list[i].draw()
+                print(i)
+                collector_door.draw()
             elif self.collector_list[i].is_door_in_Pengine:
-                self.physics_engine.remove_sprite(self.collector_door_list[i])
+                for sprite in collector_door:
+                    self.physics_engine.remove_sprite(sprite)
                 self.collector_list[i].is_door_in_Pengine = False
+            i+=1
+        
 
         if self.laser.state:
             self.laser.draw()
