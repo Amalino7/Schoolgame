@@ -180,7 +180,7 @@ class GameWindow(arcade.Window):
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
         cwd=os.getcwd()
-        map_name = f"{cwd}\Tiledproject\maps\level{self.level+1}.json"
+        map_name = f"{cwd}\Tiledproject\maps\level{self.level}.json"
         map_name = r'{}'.format(map_name)
         # try:
         tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
@@ -263,7 +263,7 @@ class GameWindow(arcade.Window):
         def blue_hit_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             pass
         #noclip
-        # self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
 
         self.physics_engine.add_collision_handler("bullet","blue",begin_handler=func,post_handler=blue_hit_handler)
         self.physics_engine.add_collision_handler("push","blue",begin_handler=box_checker,post_handler=blue_hit_handler)
@@ -273,8 +273,9 @@ class GameWindow(arcade.Window):
             if self.is_trying_to_take_object==True:
                 item_sprite.remove_from_sprite_lists()
         self.physics_engine.add_collision_handler("player","item",post_handler=item_hit_by_player_handler)
-        def enemy_hit_handler(bullet_sprite, enemy_sprite, _arbiter, _space, _data):
+        def enemy_hit_handler(bullet_sprite:BulletSprite, enemy_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "player":
+                
                 return
             enemy_sprite.hp-=1
             if enemy_sprite.hp<=1:
@@ -594,7 +595,7 @@ class GameWindow(arcade.Window):
         if self.player_sprite.attack_cooldown > 0:
             return
         self.player_sprite.attack_cooldown = ATTACK_COOLDOWN_TIME
-        bullet = BulletSprite(":resources:images/space_shooter/laserBlue01.png",self.player_sprite,
+        bullet = BulletSprite(str(os.path.dirname(os.path.abspath(__file__)))+r"\new_assets\user_int\player_bullet.png",self.player_sprite,
                               x+self.camera.position.x,#camera offset
                               y+self.camera.position.y,
                               "player")#camera offset

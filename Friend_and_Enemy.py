@@ -3,6 +3,7 @@ from constants import *
 from typing import Optional
 import math
 from Player import *
+import os
 class Friend(arcade.Sprite):
     """friend that will follow us arround """
     def __init__(self, main_path, scale, wall_list,player_sprite):
@@ -162,13 +163,14 @@ class Enemy(arcade.Sprite):
         if arcade.has_line_of_sight(self.position,self.player_sprite.position,self.wall_list,1000):
             if self.time_in_sight>TIME_TO_SEE:
                 physic_engine.set_velocity(self,self.follow_sprite(delta_time))
-                
                 if self.attack_cooldown<=0:
                     self.attack_cooldown=1
-                    bullet = BulletSprite(":resources:images/space_shooter/laserBlue01.png",self,
+
+                    bullet = BulletSprite(str(os.path.dirname(os.path.abspath(__file__)))+r"\new_assets\user_int\fireball.png",self,
                               self.player_sprite.center_x,
                                     self.player_sprite.center_y,
                                     "enemy")
+                    
                     bullet_list.append(bullet)
                     physic_engine.add_sprite(bullet,
                                        mass=BULLET_MASS,
