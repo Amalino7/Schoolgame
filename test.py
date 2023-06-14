@@ -9,7 +9,18 @@ from Player import *
 from constants import *
 import random
 from Friend_and_Enemy import *
-
+def scale_params(Blades,height):
+    for blade in Blades:
+        try:
+            blade.boundary_bottom = (height - blade.boundary_bottom) * SPRITE_SCALING_TILES
+            blade.boundary_top = (height - blade.boundary_top) * SPRITE_SCALING_TILES
+            print(blade.boundary_bottom,"dkfs",blade.boundary_top,flush=True)
+            # blade.boundary_bottom *= SPRITE_SCALING_TILES
+            # blade.boundary_top *= SPRITE_SCALING_TILES
+            # blade.boundary_left *= SPRITE_SCALING_TILES
+            # blade.boundary_right *= SPRITE_SCALING_TILES
+        except:
+            pass
 class Laser(arcade.Sprite):
     def __init__(self, image, scale, position):
         super().__init__(image, scale)
@@ -150,7 +161,8 @@ class GameWindow(arcade.Window):
         self.up_pressed: bool = False
         self.down_pressed: bool = False
         self.respawn_index=0
-        self.enemy = None
+        
+
         #add scene
         self.physics_engine2 = None
 
@@ -172,6 +184,7 @@ class GameWindow(arcade.Window):
         self.buffer: bool = False
         self.laser_collision: bool = True
         self.loading = False
+        self.can_exit = True
         # Set background color
         arcade.set_background_color(arcade.color.AMAZON)
     def tilemap_load(self):
@@ -190,26 +203,28 @@ class GameWindow(arcade.Window):
          # Pull the sprite layers out of the tile map
         self.wall_list = tile_map.sprite_lists["Red barriers"]
         self.blue_barier = tile_map.sprite_lists["Blue barriers"]
-        self.wall_list.enable_spatial_hashing()
+        self.wall_list.enable_spatial_hashing(TILE_SIZE)
+        self.blue_barier.enable_spatial_hashing(TILE_SIZE)
         self.pushable_objects_list = tile_map.sprite_lists["Pushable Items"]
         self.item_list = tile_map.sprite_lists["Dynamic Items"]
         # self.ladder_list = tile_map.sprite_lists["Ladders"]
-        # self.moving_sprites_list = tile_map.sprite_lists['Moving Platforms'] Later
+        self.moving_sprites_list = tile_map.sprite_lists["Blades"] 
+        scale_params(self.moving_sprites_list,tile_map.height * tile_map.tile_height)
         self.background = tile_map.sprite_lists['Background']
         self.keys = tile_map.sprite_lists['Keys']
         self.locked_doors = tile_map.sprite_lists['Locked_Doors']
         self.reflector_list = tile_map.sprite_lists['Reflectors']
-
         self.collector_list = arcade.SpriteList()
-        self.door_list = []
-        self.emitter_list = []
-        self.collector_door_list = []
+        self.door_list = arcade.SpriteList()
+        self.emitter_list = arcade.SpriteList()
+        self.collector_door_list = arcade.SpriteList()
         self.spawn_points = tile_map.object_lists["Spawn"]
 
 
         self.background.extend(tile_map.sprite_lists['Clouds'])
         self.background.extend(tile_map.sprite_lists['Ground'])
         self.background.extend(tile_map.sprite_lists['Aboveground'])
+        self.background.enable_spatial_hashing(TILE_SIZE)
 
         self.spawn_points = tile_map.object_lists["Spawn"]
         self.finish_line = tile_map.sprite_lists["Finish_line"]
@@ -288,11 +303,18 @@ class GameWindow(arcade.Window):
             return False
         def blue_hit_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             pass
+        def box_hit_start_blue(box_sprite,blue, _arbiter, _space, _data):
+            self.can_exit = False
+            return True
+        def box_exit_blue(box_sprite,blue, _arbiter, _space, _data):
+            if self.can_exit == False:
+                self.can_exit = True
         #noclip
         self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
 
         self.physics_engine.add_collision_handler("bullet","blue",begin_handler=func,post_handler=blue_hit_handler)
-        self.physics_engine.add_collision_handler("push","blue",begin_handler=box_checker,post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("push","blue",begin_handler=box_hit_start_blue,pre_handler=box_checker,separate_handler=box_exit_blue)
+        
         self.physics_engine.add_collision_handler("enemy","blue",begin_handler=func,post_handler=blue_hit_handler)
 
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
@@ -301,7 +323,6 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_collision_handler("player","item",post_handler=item_hit_by_player_handler)
         def enemy_hit_handler(bullet_sprite:BulletSprite, enemy_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "player":
-                
                 return
             enemy_sprite.hp-=1
             if enemy_sprite.hp<=1:
@@ -315,7 +336,11 @@ class GameWindow(arcade.Window):
             if player_sprite.HP<=1:
                self.reload()
             bullet_sprite.remove_from_sprite_lists()
-        self.physics_engine.add_collision_handler("bullet","player",post_handler=player_hit_by_bullet)
+        def can_bullet_hit_player(bullet_sprite, player_sprite, _arbiter, _space, _data):
+            if bullet_sprite.mode != "enemy" and bullet_sprite.mode!= "gone_wrong":
+                return False
+            return True
+        self.physics_engine.add_collision_handler("bullet","player",begin_handler=can_bullet_hit_player,post_handler=player_hit_by_bullet)
         def reached_end_point(player_sprite, end_sprite, _arbiter, _space, _data):
             self.reload()
         self.physics_engine.add_collision_handler("player","end",post_handler=reached_end_point)
@@ -502,8 +527,9 @@ class GameWindow(arcade.Window):
                                                 body_type=arcade.PymunkPhysicsEngine.STATIC)
 
         # Add kinematic sprites
-        # self.physics_engine.add_sprite_list(self.moving_sprites_list,
-        #                                     body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
+        self.physics_engine.add_sprite_list(self.moving_sprites_list,
+                                            collision_type="end",
+                                            body_type=arcade.PymunkPhysicsEngine.KINEMATIC)
         
         self.physics_engine.add_sprite_list(self.keys,
                                             mass=100,
@@ -595,7 +621,7 @@ class GameWindow(arcade.Window):
             else:
                 self.mode = 0
 
-        if key == arcade.key.ESCAPE and self.mode == 1:
+        if key == arcade.key.ESCAPE and self.impersonating==True and self.can_exit == True:
             self.player_sprite = self.player_sprite_old
             self.impersonating = False
     def on_key_release(self, key, modifiers):
@@ -661,11 +687,19 @@ class GameWindow(arcade.Window):
 
         # Button logic
         for i in self.button_list:
+            if self.player_sprite.collides_with_sprite(i.mainsprite):
+                i.pressed = True
+                i.mainsprite=i.sprite2
+                continue
+            else:
+                i.pressed = False
+                i.mainsprite=i.sprite1
+                
             for j in self.pushable_objects_list:
-                if self.player_sprite.collides_with_sprite(i.mainsprite) or j.collides_with_sprite(i.mainsprite):
+                if  j.collides_with_sprite(i.mainsprite):
                     i.pressed = True
                     i.mainsprite=i.sprite2
-
+                    break
                 elif not i.sprite1.collides_with_list(self.pushable_objects_list):
                     i.pressed = False
                     i.mainsprite=i.sprite1
@@ -734,29 +768,29 @@ class GameWindow(arcade.Window):
         self.physics_engine.step()
         # For each moving sprite, see if we've reached a boundary and need to
         # reverse course.
-        # for moving_sprite in self.moving_sprites_list:
-        #     if moving_sprite.boundary_right and \
-        #             moving_sprite.change_x > 0 and \
-        #             moving_sprite.right > moving_sprite.boundary_right:
-        #         moving_sprite.change_x *= -1
-        #     elif moving_sprite.boundary_left and \
-        #             moving_sprite.change_x < 0 and \
-        #             moving_sprite.left > moving_sprite.boundary_left:
-        #         moving_sprite.change_x *= -1
-        #     if moving_sprite.boundary_top and \
-        #             moving_sprite.change_y > 0 and \
-        #             moving_sprite.top > moving_sprite.boundary_top:
-        #         moving_sprite.change_y *= -1
-        #     elif moving_sprite.boundary_bottom and \
-        #             moving_sprite.change_y < 0 and \
-        #             moving_sprite.bottom < moving_sprite.boundary_bottom:
-        #         moving_sprite.change_y *= -1
+        for moving_sprite in self.moving_sprites_list:
+            if moving_sprite.boundary_right and \
+                    moving_sprite.change_x > 0 and \
+                    moving_sprite.right > moving_sprite.boundary_right:
+                moving_sprite.change_x *= -1
+            elif moving_sprite.boundary_left and \
+                    moving_sprite.change_x < 0 and \
+                    moving_sprite.left > moving_sprite.boundary_left:
+                moving_sprite.change_x *= -1
+            if moving_sprite.boundary_top and \
+                    moving_sprite.change_y > 0 and \
+                    moving_sprite.top > moving_sprite.boundary_top:
+                moving_sprite.change_y *= -1
+            elif moving_sprite.boundary_bottom and \
+                    moving_sprite.change_y < 0 and \
+                    moving_sprite.bottom < moving_sprite.boundary_bottom:
+                moving_sprite.change_y *= -1
 
         #     # Figure out and set our moving platform velocity.
         #     # Pymunk uses velocity is in pixels per second. If we instead have
         #     # pixels per frame, we need to convert.
-        #     velocity = (moving_sprite.change_x * 1 / delta_time, moving_sprite.change_y * 1 / delta_time)
-        #     self.physics_engine.set_velocity(moving_sprite, velocity)
+        velocity = (moving_sprite.change_x * 1 / delta_time, moving_sprite.change_y * 1 / delta_time)
+        self.physics_engine.set_velocity(moving_sprite, velocity)
         
         self.center_camera_to_player()
 
@@ -806,7 +840,7 @@ class GameWindow(arcade.Window):
         self.blue_barier.draw()
         self.pushable_objects_list.draw()
         # self.ladder_list.draw()
-        # self.moving_sprites_list.draw()
+        self.moving_sprites_list.draw()
         self.bullet_list.draw()
         self.item_list.draw()
 
@@ -820,7 +854,6 @@ class GameWindow(arcade.Window):
         i=0
         for collector_door in self.collector_door_list:
             if not self.collector_list[i].active:
-                print(i)
                 collector_door.draw()
             elif self.collector_list[i].is_door_in_Pengine:
                 for sprite in collector_door:
@@ -841,6 +874,8 @@ class GameWindow(arcade.Window):
         self.item_list.draw_hit_boxes()
         self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
+        if self.enemy_list[0].return_path!= None:
+            arcade.draw_line_strip(self.enemy_list[0].return_path, arcade.color.GRAPE, 2)
         try:
             arcade.draw_line_strip(self.friend.path, arcade.color.BLUE, 2)
         except:

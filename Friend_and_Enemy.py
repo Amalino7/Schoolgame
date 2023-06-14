@@ -47,7 +47,7 @@ class Friend(arcade.Sprite):
         self.time_passed+=delta_time
         
     def update_path(self, player_sprite,delta_time):
-        self.path = arcade.astar_calculate_path(self.position, player_sprite.position, self.barrier_list, diagonal_movement=True)
+        self.path = arcade.astar_calculate_path(self.position, (player_sprite.position[0]+TILE_SIZE,player_sprite.position[1]+TILE_SIZE), self.barrier_list, diagonal_movement=True)
         change=[0,0]
         # Move to next point on path. Using min to avoid overshooting
         if self.path and len(self.path) > 1:
@@ -136,7 +136,7 @@ class Enemy(arcade.Sprite):
         self.character_face_direction_x = RIGHT_FACING
         self.character_face_direction_y = FRONT_FACING
 
-
+        self.return_path = None
         """Process path so it scales right"""
         self.static_path = []
         for i in path:
@@ -148,47 +148,100 @@ class Enemy(arcade.Sprite):
         """Path and other things"""
         self.center_x = self.static_path[0][0]
         self.center_y = self.static_path[0][1]
-        self.cur_dir=1
+        self.cur_dir = 1
+        self.return_path_position = 1
         self.player_sprite:Optional[PlayerSprite]=player_sprite
-        #self.barrier_list = arcade.AStarBarrierList(self, wall_list, TILE_SIZE, -16000, 16000, -16000, 16000)
+        self.barrier_list = arcade.AStarBarrierList(self, wall_list, TILE_SIZE, -16000, 16000, -16000, 16000)
         self.time_in_sight = 0
         self.hp = 10
-        self.attack_cooldown=0
-
+        self.attack_cooldown = 0
+        self.return_path_position = -1 
 
     def reload(self,physic_engine:Optional[arcade.PymunkPhysicsEngine]):
         physic_engine.set_position(self,self.static_path[0])
     def on_update(self,physic_engine:Optional[arcade.PymunkPhysicsEngine],delta_time,bullet_list):
         self.attack_cooldown-=delta_time
         if arcade.has_line_of_sight(self.position,self.player_sprite.position,self.wall_list,1000):
-            if self.time_in_sight>TIME_TO_SEE:
-                physic_engine.set_velocity(self,self.follow_sprite(delta_time))
-                if self.attack_cooldown<=0:
-                    self.attack_cooldown=1
+            self.time_in_sight+=delta_time
+        else:
+            self.time_in_sight-=delta_time
+            if self.time_in_sight < 0:
+                self.time_in_sight = 0
 
-                    bullet = BulletSprite(str(os.path.dirname(os.path.abspath(__file__)))+r"\new_assets\user_int\fireball.png",self,
+        if self.time_in_sight>TIME_TO_SEE:
+            self.return_path_position = 0
+            self.return_path = None
+            physic_engine.set_velocity(self,self.follow_sprite(delta_time))
+            if self.attack_cooldown<=0:
+                self.attack_cooldown=1
+
+                bullet = BulletSprite(str(os.path.dirname(os.path.abspath(__file__)))+r"\new_assets\user_int\fireball.png",self,
                               self.player_sprite.center_x,
                                     self.player_sprite.center_y,
                                     "enemy")
                     
-                    bullet_list.append(bullet)
-                    physic_engine.add_sprite(bullet,
+                bullet_list.append(bullet)
+                physic_engine.add_sprite(bullet,
                                        mass=BULLET_MASS,
                                        damping=1,
                                        collision_type="bullet",
                                        gravity=(0,0),
                                        elasticity=0.9)
-                    # Add force to bullet
-                    force = (BULLET_MOVE_FORCE, 0)
-                    physic_engine.apply_force(bullet, force)
-            else:
-                self.update_path(delta_time)
-                self.time_in_sight+=delta_time
+                # Add force to bullet
+                force = (BULLET_MOVE_FORCE, 0)
+                physic_engine.apply_force(bullet, force)
         else:
-            self.time_in_sight-=delta_time
-            if self.time_in_sight<0:
-                self.time_in_sight = 0
-            physic_engine.set_velocity(self,self.update_path(delta_time))
+            if self.return_path_position == -1:
+                physic_engine.set_velocity(self,self.update_path(delta_time))
+            else:
+                # print("move",flush=True)
+                physic_engine.set_velocity(self,self.return_to_path())
+    def return_to_path(self):
+        if self.return_path == None:
+            #used to avoid weird wonky animations
+            tmp_path = arcade.astar_calculate_path(self.position, self.static_path[self.cur_dir], self.barrier_list, diagonal_movement=True)
+            self.return_path=[tmp_path[0]]
+            for index in range(1,len(tmp_path)-1):
+                if tmp_path[index+1][0] == tmp_path[index][0] and tmp_path[index-1][0] == tmp_path[index][0]:
+                    # do not add point
+                    continue
+                if tmp_path[index+1][1] == tmp_path[index][1] and tmp_path[index-1][1] == tmp_path[index][1]:
+                    continue
+                if abs(tmp_path[index+1][0]-tmp_path[index][0]) == abs(tmp_path[index-1][0]-tmp_path[index][0]) and\
+                    abs(tmp_path[index+1][1]-tmp_path[index][1]) == abs(tmp_path[index-1][1]-tmp_path[index][1]):
+                    continue
+                self.return_path.append(tmp_path[index])
+            self.return_path.append(tmp_path[len(tmp_path)-1])
+
+
+        force = [0,0]
+        # Move to next point on path. Using min to avoid overshooting
+        if self.return_path_position >= len(self.return_path):
+            self.return_path_position = -1
+            self.return_path = None
+            # print("aaaaaaaaaaaa",flush=True)
+            return (0,0)
+        if self.center_y < self.return_path[self.return_path_position][1]:
+            force[1] += min(ENEMY_SPEED, self.return_path[self.return_path_position][1] - self.center_y)
+            # print(self.center_y,self.path[self.cur_dir][0],self.path[self.cur_dir][0],flush=True)
+        elif self.center_y > self.return_path[self.return_path_position][1]:
+            force[1] -= min(ENEMY_SPEED, self.center_y - self.return_path[self.return_path_position][1])
+
+        if self.center_x <= self.return_path[self.return_path_position][0]:
+            force[0] += min(ENEMY_SPEED, self.return_path[self.return_path_position][0] - self.center_x)
+        elif self.center_x > self.return_path[self.return_path_position][0]:
+            force[0] -= min(ENEMY_SPEED, self.center_x - self.return_path[self.return_path_position][0])
+
+        force[0]*=FORCE_MULTIPLR
+        force[1]*=FORCE_MULTIPLR
+
+        """ Debug tool """
+        # print(self.center_x ,self.center_y,self.return_path[self.return_path_position][0],self.return_path[self.return_path_position][1],flush=True) 
+        if round(self.center_x) == round(self.return_path[self.return_path_position][0]) and round(self.center_y) == round(self.return_path[self.return_path_position][1]):
+            # print("next",flush=True)
+            self.return_path_position+=1
+
+        return tuple(force)
 
     def update_path(self, delta_time):
         force = [0,0]
