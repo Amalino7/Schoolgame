@@ -1841,8 +1841,8 @@
                  "type":"",
                  "visible":true,
                  "width":128,
-                 "x":7536,
-                 "y":7000
+                 "x":7808.72727272727,
+                 "y":10106.0606060606
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -2316,7 +2316,7 @@
                  "id":12,
                  "locked":true,
                  "name":"Door2",
-                 "opacity":1,
+                 "opacity":0.97,
                  "type":"tilelayer",
                  "visible":true,
                  "width":84,

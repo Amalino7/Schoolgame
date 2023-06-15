@@ -16,11 +16,12 @@ def scale_params(Blades, height):
         try:
             blade.boundary_bottom = (height - blade.boundary_bottom) * SPRITE_SCALING_TILES
             blade.boundary_top = (height - blade.boundary_top) * SPRITE_SCALING_TILES
-            print(blade.boundary_bottom, "dkfs", blade.boundary_top, flush=True)
-            # blade.boundary_bottom *= SPRITE_SCALING_TILES
-            # blade.boundary_top *= SPRITE_SCALING_TILES
-            # blade.boundary_left *= SPRITE_SCALING_TILES
-            # blade.boundary_right *= SPRITE_SCALING_TILES
+        except:
+            pass
+
+        try:
+            blade.boundary_left *= SPRITE_SCALING_TILES
+            blade.boundary_right *= SPRITE_SCALING_TILES
         except:
             pass
 
@@ -207,7 +208,7 @@ class GameWindow(arcade.Window):
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
         cwd = os.getcwd()
-        map_name = f"{cwd}\\Tiledproject\\maps\\level{self.level+1}.json"
+        map_name = f"{cwd}\\Tiledproject\\maps\\level{self.level}.json"
         map_name = r'{}'.format(map_name)
         # try:
         tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
@@ -230,7 +231,7 @@ class GameWindow(arcade.Window):
         self.locks = tile_map.sprite_lists['Locks']
         self.reflector_list = tile_map.sprite_lists['Reflectors']
         self.collector_list = arcade.SpriteList()
-        self.door_list = arcade.SpriteList()
+        self.door_list = []
         self.locked_doors = []
         self.emitter_list = []
         self.collector_door_list = []
@@ -288,8 +289,10 @@ class GameWindow(arcade.Window):
         i = 0
         while True:
             try:
+                print("Door loaded", flush=True)
                 self.door_list.append(Door(tile_map.sprite_lists[f"Door{i+1}"]))
                 i += 1
+                
             except:
                 break
 
@@ -343,7 +346,7 @@ class GameWindow(arcade.Window):
             if not self.can_exit:
                 self.can_exit = True
         # noclip
-        self.physics_engine.add_collision_handler("player", "wall", begin_handler=func, post_handler=blue_hit_handler)
+        # self.physics_engine.add_collision_handler("player", "wall", begin_handler=func, post_handler=blue_hit_handler)
 
         self.physics_engine.add_collision_handler("bullet", "blue",
                                                   begin_handler=func, post_handler=blue_hit_handler)
@@ -392,7 +395,7 @@ class GameWindow(arcade.Window):
                                                   post_handler=enemy_hit_handler)
 
         def can_bullet_hit_player(bullet_sprite, player_sprite, _arbiter, _space, _data):
-            if bullet_sprite.mode != "enemy" and bullet_sprite.mode != "gone_wrong":
+            if bullet_sprite.mode == "player":
                 return False
             return True
         self.physics_engine.add_collision_handler("bullet", "player",
@@ -857,7 +860,7 @@ class GameWindow(arcade.Window):
                 moving_sprite.change_x *= -1
             elif moving_sprite.boundary_left and \
                     moving_sprite.change_x < 0 and \
-                    moving_sprite.left > moving_sprite.boundary_left:
+                    moving_sprite.left < moving_sprite.boundary_left:
                 moving_sprite.change_x *= -1
             if moving_sprite.boundary_top and \
                     moving_sprite.change_y > 0 and \
@@ -921,8 +924,8 @@ class GameWindow(arcade.Window):
         self.background.draw()
         drawButtons(self.button_list)
         drawLevers(self.lever_list)
-        self.wall_list.draw()
-        self.blue_barier.draw()
+        # self.wall_list.draw()
+        # self.blue_barier.draw()
         self.pushable_objects_list.draw()
         # self.ladder_list.draw()
         self.moving_sprites_list.draw()
@@ -959,11 +962,11 @@ class GameWindow(arcade.Window):
         self.player_list.draw()
         self.friend.draw()
         self.enemy_list.draw()
-        self.end_points.draw_hit_boxes()
+        self.end_points.draw()
         self.item_list.draw_hit_boxes()
         self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
-        self.finish_line.draw_hit_boxes(color=arcade.color_from_hex_string("FF0000"), line_thickness = 1.2)
+        self.finish_line.draw()
         drawDoors(self.door_list)
 
         self.gui_camera.use()
