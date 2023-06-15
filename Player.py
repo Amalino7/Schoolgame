@@ -1,6 +1,8 @@
 import arcade
 from constants import *
 from typing import Optional
+
+
 class PlayerSprite(arcade.Sprite):
     """ Player Sprite """
     def __init__(self,
