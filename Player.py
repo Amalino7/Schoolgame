@@ -15,10 +15,10 @@ class PlayerSprite(arcade.Sprite):
         self.scale = SPRITE_SCALING_PLAYER
         main_path = "other_assets\magus\magus"
         
-        self.front_texture_list=[]
-        self.back_texture_list=[]
-        self.left_texture_list=[]
-        self.right_texture_list=[]
+        self.front_texture_list = []
+        self.back_texture_list = []
+        self.left_texture_list = []
+        self.right_texture_list = []
         self.HP = 10
         # Load textures for idle standing\
         for i in range(1,3):
@@ -30,7 +30,7 @@ class PlayerSprite(arcade.Sprite):
         # Set the initial texture
         self.texture = self.front_texture_list[0]
 
-        self.is_trying_to_take_object=False
+        self.is_trying_to_take_object = False
         # Hit box will be set based on the first image used.
         self.hit_box = self.texture.hit_box_points
 
@@ -44,16 +44,16 @@ class PlayerSprite(arcade.Sprite):
         self.x_odometer = 0
         self.y_odometer = 0
 
-        self.item_list=item_list
+        self.item_list = item_list
         self.score = 0
 
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
         """ Handle being moved by the pymunk engine """
-        itemhitlist=arcade.check_for_collision_with_list(self,self.item_list)
+        itemhitlist = arcade.check_for_collision_with_list(self, self.item_list)
         if len(itemhitlist)>0:
-            if self.is_trying_to_take_object==True:
+            if self.is_trying_to_take_object == True:
                 for i in itemhitlist:
-                    self.score+=10
+                    self.score += 10
                     i.remove_from_sprite_lists()
 
         # Figure out if we need to face left or right
@@ -78,7 +78,7 @@ class PlayerSprite(arcade.Sprite):
         # Have we moved far enough to change the texture?
         if abs(dx)>abs(dy):
             if abs(self.x_odometer) > DISTANCE_TO_CHANGE_TEXTURE:
-            # Reset the odometer
+                # Reset the odometer
                 self.x_odometer = 0
 
                 # Advance the walking animation
@@ -102,3 +102,4 @@ class PlayerSprite(arcade.Sprite):
                     self.texture = self.front_texture_list[self.cur_texture]
                 elif self.character_face_direction_2 == BACK_FACING:
                     self.texture = self.back_texture_list[self.cur_texture]
+

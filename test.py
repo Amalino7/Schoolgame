@@ -9,7 +9,7 @@ from Player import *
 from constants import *
 import random
 from Friend_and_Enemy import *
-def scale_params(Blades,height):
+def scale_params(Blades, height):
     for blade in Blades:
         try:
             blade.boundary_bottom = (height - blade.boundary_bottom) * SPRITE_SCALING_TILES
@@ -328,9 +328,10 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_collision_handler("enemy","blue",begin_handler=func,post_handler=blue_hit_handler)
 
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
-            if self.is_trying_to_take_object==True:
+            if self.is_trying_to_take_object == True:
                 item_sprite.remove_from_sprite_lists()
-        self.physics_engine.add_collision_handler("player","item",post_handler=item_hit_by_player_handler)
+
+        self.physics_engine.add_collision_handler("player", "item", post_handler = item_hit_by_player_handler)
         def enemy_hit_handler(bullet_sprite:BulletSprite, enemy_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "player":
                 return
@@ -344,7 +345,7 @@ class GameWindow(arcade.Window):
                 if enemy_sprite.hp<=1:
                     enemy_sprite.kill() 
             bullet_sprite.remove_from_sprite_lists()
-        self.physics_engine.add_collision_handler("bullet","enemy",post_handler= enemy_hit_handler)
+
         def player_hit_by_bullet(bullet_sprite, player_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "enemy" and bullet_sprite.mode!= "gone_wrong":
                 return
@@ -352,10 +353,17 @@ class GameWindow(arcade.Window):
             if player_sprite.HP<=1:
                self.reload()
             bullet_sprite.remove_from_sprite_lists()
+
         def can_bullet_hit_player(bullet_sprite, player_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "enemy" and bullet_sprite.mode!= "gone_wrong":
                 return False
             return True
+        
+        def can_bullet_hit_enemy(bullet_sprite, enemy_sprite, _arbiter, _space, _data):
+            if bullet_sprite.mode == "player":
+                return True
+            return False
+        self.physics_engine.add_collision_handler("bullet","enemy",begin_handler=can_bullet_hit_enemy,post_handler= enemy_hit_handler)
         self.physics_engine.add_collision_handler("bullet","player",begin_handler=can_bullet_hit_player,post_handler=player_hit_by_bullet)
         def reached_end_point(player_sprite, end_sprite, _arbiter, _space, _data):
             self.reload()
@@ -650,7 +658,7 @@ class GameWindow(arcade.Window):
 
         if key == arcade.key.ESCAPE and self.impersonating == True and self.can_exit == True:
 
-            if self.player_sprite.move:
+            if hasattr(self.player_sprite,"move"):
                 self.player_sprite.move = True
             self.player_sprite = self.player_sprite_old
             self.impersonating = False
@@ -913,12 +921,6 @@ class GameWindow(arcade.Window):
         self.item_list.draw_hit_boxes()
         self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
-        if self.enemy_list[0].return_path!= None:
-            arcade.draw_line_strip(self.enemy_list[0].return_path, arcade.color.GRAPE, 2)
-        try:
-            arcade.draw_line_strip(self.friend.path, arcade.color.BLUE, 2)
-        except:
-            pass
         self.finish_line.draw_hit_boxes(color=arcade.color_from_hex_string("FF0000"),line_thickness = 1.2)
         drawDoors(self.door_list)
 
