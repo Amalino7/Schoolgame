@@ -9,18 +9,21 @@ from Player import *
 from constants import *
 import random
 from Friend_and_Enemy import *
+
 def scale_params(Blades, height):
     for blade in Blades:
         try:
             blade.boundary_bottom = (height - blade.boundary_bottom) * SPRITE_SCALING_TILES
             blade.boundary_top = (height - blade.boundary_top) * SPRITE_SCALING_TILES
-            print(blade.boundary_bottom,"dkfs",blade.boundary_top,flush=True)
+            print(blade.boundary_bottom, "dkfs", blade.boundary_top, flush=True)
             # blade.boundary_bottom *= SPRITE_SCALING_TILES
             # blade.boundary_top *= SPRITE_SCALING_TILES
             # blade.boundary_left *= SPRITE_SCALING_TILES
             # blade.boundary_right *= SPRITE_SCALING_TILES
         except:
             pass
+
+
 class Laser(arcade.Sprite):
     def __init__(self, image, scale, position):
         super().__init__(image, scale)
@@ -40,7 +43,7 @@ class Laser(arcade.Sprite):
         else:
             self.dirx = 0.0 
             self.diry = math.sin(math.radians(degrees))
-        
+   
         if self.direction > 3:
             self.direction = 0
         elif self.direction < 0:
@@ -48,6 +51,7 @@ class Laser(arcade.Sprite):
 
     def get_direction(self):
         return self.direction
+
     def update(self):
         self.center_x += self.dirx * LASER_SPEED
         self.center_y += self.diry * LASER_SPEED
@@ -60,6 +64,7 @@ def reflect_laser(dir1, dir2, laser):
         laser.change_direction(laser.get_direction()-1)
     else:
         laser.state = False
+
 
 def shoot_laser(laser, direction, emitter_pos):
     laser.position = emitter_pos
@@ -87,10 +92,10 @@ def accepted_collector_dir(collector):
 
 
 class Lever():
-    def __init__(self, sprite1,sprite2):
-        self.sprite1=sprite1
-        self.sprite2=sprite2
-        self.mainsprite=sprite1
+    def __init__(self, sprite1, sprite2):
+        self.sprite1 = sprite1
+        self.sprite2 = sprite2
+        self.mainsprite = sprite1
         self.pressed = False
 
     
@@ -98,26 +103,36 @@ def drawLevers(leverlist):
     for lever in leverlist:
         lever.mainsprite.draw()
 
+
 class Button():
-    def __init__(self, sprite1,sprite2):
-        self.sprite1=sprite1
-        self.sprite2=sprite2
-        self.mainsprite=sprite1
+    def __init__(self, sprite1, sprite2):
+        self.sprite1 = sprite1
+        self.sprite2 = sprite2
+        self.mainsprite = sprite1
         self.pressed = False
+
+
 def drawButtons(buttonlist):
     for button in buttonlist:
         button.mainsprite.draw()
+
+
 class Door():
     def __init__(self,Spritelist):
-        self.spritelist=Spritelist
-        self.state = 0 #closed
+        self.spritelist = Spritelist
+        self.state = 0  #closed
+
+
 def drawDoors(doorlist):
     for door in doorlist:
         if door.state == 0:
             door.spritelist.draw()
 
+
 class Money(arcade.Sprite):
     value = 30
+
+
 class GameWindow(arcade.Window):
     """ Main Window """
 
@@ -129,9 +144,9 @@ class GameWindow(arcade.Window):
         self.set_fullscreen()
         # Player sprite
         self.player_sprite: Optional[PlayerSprite] = None
-        self.level = 1 #level
+        self.level = 1  #level
         self.end_of_map = 0  #indicate endpoint
-        self.laser_state=None
+        self.laser_state = None
         self.left_gui = 550
 
         # Sprite lists we need
@@ -151,8 +166,8 @@ class GameWindow(arcade.Window):
         self.reflector_list: Optional[arcade.SpriteList] = None
 
         self.door_list = None
-        self.is_trying_to_take_object: bool=False
-        self.button_list=None
+        self.is_trying_to_take_object: bool = False
+        self.button_list = None
         self.lever_list = None
         self.gui_camera = None
         # Track the current state of what key is pressed
@@ -160,7 +175,7 @@ class GameWindow(arcade.Window):
         self.right_pressed: bool = False
         self.up_pressed: bool = False
         self.down_pressed: bool = False
-        self.respawn_index=0
+        self.respawn_index = 0
         
 
         #add scene
@@ -168,10 +183,10 @@ class GameWindow(arcade.Window):
 
         self.scene: arcade.Scene() = None
         # self.possible_jumps=2
-        self.camera=None
+        self.camera = None
         # Physics engine
         self.physics_engine: Optional[arcade.PymunkPhysicsEngine] = None
-        self.respawn_point=None
+        self.respawn_point = None
         self.player_sprite_old=None
         self.spawn_points=None
         self.mode = 0 #shoot
@@ -382,9 +397,9 @@ class GameWindow(arcade.Window):
         def short_attack_enemy(enemy_sprite, player_sprite, _arbiter, _space, _data):
             if enemy_sprite.attack_cooldown < 0:
                 enemy_sprite.attack_cooldown = 1
-                player_sprite.HP-=1
-                if player_sprite.HP<=0:
-                    self.setup()
+                player_sprite.HP -= 1
+                if player_sprite.HP <= 0:
+                    self.reload()
         self.physics_engine.add_collision_handler("enemy", "player", post_handler=short_attack_enemy)
         def push_hit_handler(bullet_sprite, push_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode == "enemy" or bullet_sprite.mode == "gone_wrong":
@@ -422,12 +437,13 @@ class GameWindow(arcade.Window):
                         self.locked_doors[i] = None
 
 
-        def finish_line_reached(player_sprite,_finish_line, _arbiter, _space, _data):
-                player_sprite.kill()
-                self.loading = True
-                self.level+=1
-                self.setup()
-                self.loading = False
+        def finish_line_reached(player_sprite, _finish_line, _arbiter, _space, _data):
+            player_sprite.kill()
+            self.loading = True
+            self.level += 1
+            self.setup()
+            # arcade.run()
+            self.loading = False
         self.physics_engine.add_collision_handler("player", "finish", post_handler=finish_line_reached)
         
         self.physics_engine.add_collision_handler("player", "key" , post_handler=key_hit_by_player_handler)
