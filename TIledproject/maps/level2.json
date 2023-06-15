@@ -1013,6 +1013,29 @@
         }, 
         {
          "draworder":"topdown",
+         "id":100,
+         "name":"Blades",
+         "objects":[
+                {
+                 "gid":1046,
+                 "height":128,
+                 "id":18,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":128,
+                 "x":3705.69696969697,
+                 "y":9427.63636363636
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":62,
          "locked":true,
          "name":"Spawn",
@@ -3683,8 +3706,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":100,
- "nextobjectid":18,
+ "nextlayerid":101,
+ "nextobjectid":19,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.1",
