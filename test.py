@@ -10,6 +10,7 @@ from constants import *
 import random
 from Friend_and_Enemy import *
 
+
 def scale_params(Blades, height):
     for blade in Blades:
         try:
@@ -257,7 +258,10 @@ class GameWindow(arcade.Window):
         while True:
             try:
                 for sprite in tile_map.sprite_lists[f"Collector{i+1}"]:
-                    tmp_collect = Collector(sprite.texture, sprite.center_x, sprite.center_y, sprite.properties['tile_id'])
+                    tmp_collect = Collector(sprite.texture,
+                                            sprite.center_x,
+                                            sprite.center_y,
+                                            sprite.properties['tile_id'])
                     self.collector_list.append(tmp_collect)
                     print("Collector added", flush=1)
                 i += 1
@@ -295,7 +299,8 @@ class GameWindow(arcade.Window):
         i = 0
         while True:
             try:
-                for button1, button2 in zip(tile_map.sprite_lists[f"B{i+1}State1"], tile_map.sprite_lists[f"B{i+1}State2"]):
+                for button1, button2 in zip(tile_map.sprite_lists[f"B{i+1}State1"],
+                                            tile_map.sprite_lists[f"B{i+1}State2"]):
                     self.button_list.append(Button(button1, button2))
                 i += 1
             except:
@@ -307,7 +312,8 @@ class GameWindow(arcade.Window):
         i = 0
         while True:
             try:
-                for lever1, lever2 in zip(tile_map.sprite_lists[f"L{i+1}State1"], tile_map.sprite_lists[f"L{i+1}State2"]):
+                for lever1, lever2 in zip(tile_map.sprite_lists[f"L{i+1}State1"],
+                                          tile_map.sprite_lists[f"L{i+1}State2"]):
                     self.lever_list.append(Lever(lever1, lever2))
                 print("lever added", flush=1)
                 i += 1
@@ -339,15 +345,20 @@ class GameWindow(arcade.Window):
         # noclip
         # self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
 
-        self.physics_engine.add_collision_handler("bullet", "blue", begin_handler=func, post_handler=blue_hit_handler)
-        self.physics_engine.add_collision_handler("push", "blue", begin_handler=box_hit_start_blue, pre_handler=box_checker, separate_handler=box_exit_blue)
+        self.physics_engine.add_collision_handler("bullet", "blue",
+                                                  begin_handler=func, post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("push", "blue",
+                                                  begin_handler=box_hit_start_blue, pre_handler=box_checker,
+                                                  separate_handler=box_exit_blue)
 
-        self.physics_engine.add_collision_handler("enemy", "blue", begin_handler=func, post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("enemy", "blue",
+                                                  begin_handler=func, post_handler=blue_hit_handler)
 
         def item_hit_by_player_handler(player_sprite, item_sprite, _arbiter, _space, _data):
             if self.is_trying_to_take_object:
                 item_sprite.remove_from_sprite_lists()
-        self.physics_engine.add_collision_handler("player", "item", post_handler=item_hit_by_player_handler)
+        self.physics_engine.add_collision_handler("player", "item",
+                                                  post_handler=item_hit_by_player_handler)
 
         def enemy_hit_handler(bullet_sprite: BulletSprite, enemy_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "player":
@@ -362,7 +373,8 @@ class GameWindow(arcade.Window):
                 if enemy_sprite.hp <= 1:
                     enemy_sprite.kill()
             bullet_sprite.remove_from_sprite_lists()
-        self.physics_engine.add_collision_handler("bullet", "enemy", post_handler=enemy_hit_handler)
+        self.physics_engine.add_collision_handler("bullet", "enemy",
+                                                  post_handler=enemy_hit_handler)
 
         def player_hit_by_bullet(bullet_sprite, player_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "enemy" and bullet_sprite.mode != "gone_wrong":
@@ -376,7 +388,9 @@ class GameWindow(arcade.Window):
             if bullet_sprite.mode != "enemy" and bullet_sprite.mode != "gone_wrong":
                 return False
             return True
-        self.physics_engine.add_collision_handler("bullet", "player", begin_handler=can_bullet_hit_player, post_handler=player_hit_by_bullet)
+        self.physics_engine.add_collision_handler("bullet", "player",
+                                                  begin_handler=can_bullet_hit_player,
+                                                  post_handler=player_hit_by_bullet)
 
         def reached_end_point(player_sprite, end_sprite, _arbiter, _space, _data):
             self.reload()
@@ -389,7 +403,9 @@ class GameWindow(arcade.Window):
         self.physics_engine.add_collision_handler("bullet", "wall", post_handler=wall_hit_handler)
         self.physics_engine.add_collision_handler("bullet", "end", post_handler=wall_hit_handler)
 
-        def bullet_clash(bullet1: Optional[BulletSprite], bullet2: Optional[BulletSprite], _arbiter, _space, _data):
+        def bullet_clash(bullet1: Optional[BulletSprite],
+                        bullet2: Optional[BulletSprite],
+                        _arbiter, _space, _data):
             bullet1.remove_from_sprite_lists()
             bullet2.remove_from_sprite_lists()
         self.physics_engine.add_collision_handler("bullet", "bullet", post_handler=bullet_clash)
@@ -520,7 +536,8 @@ class GameWindow(arcade.Window):
         # Friction is between two objects in contact. It is important to remember
         # in top-down games that friction moving along the 'floor' is controlled
         # by damping.a
-        self.laser = Laser(":resources:images/space_shooter/laserBlue01.png", 1.0, self.player_sprite.position)
+        self.laser = Laser(":resources:images/space_shooter/laserBlue01.png",
+                           1.0, self.player_sprite.position)
         self.physics_engine.add_sprite_list(self.end_points,
                                             mass=1,
                                             collision_type="end",
@@ -696,7 +713,8 @@ class GameWindow(arcade.Window):
         if self.player_sprite.attack_cooldown > 0:
             return
         self.player_sprite.attack_cooldown = ATTACK_COOLDOWN_TIME
-        bullet = BulletSprite(str(os.path.dirname(os.path.abspath(__file__)))+r"\new_assets\user_int\player_bullet.png", self.player_sprite,
+        bullet = BulletSprite(str(os.path.dirname(os.path.abspath(__file__)))+r"\new_assets\user_int\player_bullet.png",
+                              self.player_sprite,
                               x+self.camera.position.x,  # camera offset
                               y+self.camera.position.y,
                               "player")  # camera offset
@@ -763,7 +781,8 @@ class GameWindow(arcade.Window):
 
         # Lever logic
         for i in self.lever_list:
-            if self.player_sprite.collides_with_sprite(i.mainsprite) and self.is_trying_to_take_object and not self.buffer:
+            if self.player_sprite.collides_with_sprite(i.mainsprite) and\
+                    self.is_trying_to_take_object and not self.buffer:
                 self.buffer = True
                 i.pressed = not (i.pressed)
                 if i.pressed:

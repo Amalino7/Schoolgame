@@ -13,7 +13,7 @@ SPRITE_SIZE = int(SPRITE_IMAGE_SIZE * SPRITE_SCALING_PLAYER)
 # Size of screen to show, in pixels
 root = tk.Tk()
 SCREEN_WIDTH = root.winfo_screenwidth()
-SCREEN_HEIGHT = root.winfo_screenheight() 
+SCREEN_HEIGHT = root.winfo_screenheight()
 
 # --- Physics forces. Higher number, faster accelerating.
 
@@ -40,16 +40,16 @@ PLAYER_MOVE_FORCE_ON_GROUND = 1800
 # Close enough to not-moving to have the animation go to idle.
 DEAD_ZONE = 0.1
 
-#Facing
+# Facing
 RIGHT_FACING = 0
 LEFT_FACING = 1
-FRONT_FACING=2
-BACK_FACING=3
+FRONT_FACING = 2
+BACK_FACING = 3
 
 # How many pixels to move before we change the texture in the walking animation
 DISTANCE_TO_CHANGE_TEXTURE = 50
 
-#size of tile
+# size of tile
 TILE_SIZE = 64
 
 # How much force to put on the bullet
@@ -62,7 +62,7 @@ DIST_UNTIL_BACKFIRE = 1000
 DIST_UNTIL_DISAPPEAR = 10000
 ENEMY_SPEED = 10
 FOLLOW_SPEED = 3
-FORCE_FOR_MOVEMENT= 100
+FORCE_FOR_MOVEMENT = 100
 
 
 # Navigation speed
