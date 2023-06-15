@@ -343,7 +343,7 @@ class GameWindow(arcade.Window):
             if not self.can_exit:
                 self.can_exit = True
         # noclip
-        # self.physics_engine.add_collision_handler("player","wall",begin_handler=func,post_handler=blue_hit_handler)
+        self.physics_engine.add_collision_handler("player", "wall", begin_handler=func, post_handler=blue_hit_handler)
 
         self.physics_engine.add_collision_handler("bullet", "blue",
                                                   begin_handler=func, post_handler=blue_hit_handler)
@@ -373,8 +373,6 @@ class GameWindow(arcade.Window):
                 if enemy_sprite.hp <= 1:
                     enemy_sprite.kill()
             bullet_sprite.remove_from_sprite_lists()
-        self.physics_engine.add_collision_handler("bullet", "enemy",
-                                                  post_handler=enemy_hit_handler)
 
         def player_hit_by_bullet(bullet_sprite, player_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "enemy" and bullet_sprite.mode != "gone_wrong":
@@ -383,6 +381,15 @@ class GameWindow(arcade.Window):
             if player_sprite.HP <= 1:
                 self.reload()
             bullet_sprite.remove_from_sprite_lists()
+
+        def can_bullet_hit_enemy(bullet_sprite, enemy_sprite, _arbiter, _space, _data):
+            if bullet_sprite.mode == "player":
+                return True
+            return False
+        
+        self.physics_engine.add_collision_handler("bullet", "enemy",
+                                                  begin_handler=can_bullet_hit_enemy,
+                                                  post_handler=enemy_hit_handler)
 
         def can_bullet_hit_player(bullet_sprite, player_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "enemy" and bullet_sprite.mode != "gone_wrong":
@@ -536,8 +543,9 @@ class GameWindow(arcade.Window):
         # Friction is between two objects in contact. It is important to remember
         # in top-down games that friction moving along the 'floor' is controlled
         # by damping.a
-        self.laser = Laser(":resources:images/space_shooter/laserBlue01.png",
-                           1.0, self.player_sprite.position)
+        self.laser = Laser("new_assets/user_int/emiter_projectile.png",
+                           SPRITE_SCALING_TILES,
+                           self.player_sprite.position)
         self.physics_engine.add_sprite_list(self.end_points,
                                             mass=1,
                                             collision_type="end",

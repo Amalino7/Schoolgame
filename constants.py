@@ -39,7 +39,6 @@ PLAYER_MOVE_FORCE_ON_GROUND = 1800
 
 # Close enough to not-moving to have the animation go to idle.
 DEAD_ZONE = 0.1
-
 # Facing
 RIGHT_FACING = 0
 LEFT_FACING = 1
