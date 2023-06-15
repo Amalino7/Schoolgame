@@ -156,6 +156,7 @@ class Enemy(arcade.Sprite):
         self.hp = 10
         self.attack_cooldown = 0
         self.return_path_position = -1 
+        self.move = True
 
     def reload(self,physic_engine:Optional[arcade.PymunkPhysicsEngine]):
         physic_engine.set_position(self,self.static_path[0])
@@ -171,7 +172,8 @@ class Enemy(arcade.Sprite):
         if self.time_in_sight>TIME_TO_SEE:
             self.return_path_position = 0
             self.return_path = None
-            physic_engine.set_velocity(self,self.follow_sprite(delta_time))
+            if self.move == True:
+                physic_engine.set_velocity(self,self.follow_sprite(delta_time))
             if self.attack_cooldown<=0:
                 self.attack_cooldown=1
 
@@ -191,6 +193,8 @@ class Enemy(arcade.Sprite):
                 force = (BULLET_MOVE_FORCE, 0)
                 physic_engine.apply_force(bullet, force)
         else:
+            if self.move == False:
+                return
             if self.return_path_position == -1:
                 physic_engine.set_velocity(self,self.update_path(delta_time))
             else:

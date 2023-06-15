@@ -324,9 +324,15 @@ class GameWindow(arcade.Window):
         def enemy_hit_handler(bullet_sprite:BulletSprite, enemy_sprite, _arbiter, _space, _data):
             if bullet_sprite.mode != "player":
                 return
-            enemy_sprite.hp-=1
-            if enemy_sprite.hp<=1:
-               enemy_sprite.kill() 
+            if self.mode == 1:
+                self.player_sprite_old = self.player_sprite
+                self.player_sprite = enemy_sprite   
+                self.impersonating = True
+                enemy_sprite.move = False
+            else:
+                enemy_sprite.hp-=1
+                if enemy_sprite.hp<=1:
+                    enemy_sprite.kill() 
             bullet_sprite.remove_from_sprite_lists()
         self.physics_engine.add_collision_handler("bullet","enemy",post_handler= enemy_hit_handler)
         def player_hit_by_bullet(bullet_sprite, player_sprite, _arbiter, _space, _data):
@@ -363,6 +369,8 @@ class GameWindow(arcade.Window):
                     self.setup()
         self.physics_engine.add_collision_handler("enemy", "player", post_handler=short_attack_enemy)
         def push_hit_handler(bullet_sprite, push_sprite, _arbiter, _space, _data):
+            if bullet_sprite.mode == "enemy" or bullet_sprite.mode == "gone_wrong":
+                return
             if self.mode == 1:
                 self.player_sprite_old = self.player_sprite
                 self.player_sprite = push_sprite   
@@ -621,9 +629,13 @@ class GameWindow(arcade.Window):
             else:
                 self.mode = 0
 
-        if key == arcade.key.ESCAPE and self.impersonating==True and self.can_exit == True:
+        if key == arcade.key.ESCAPE and self.impersonating == True and self.can_exit == True:
+
+            if self.player_sprite.move:
+                self.player_sprite.move = True
             self.player_sprite = self.player_sprite_old
             self.impersonating = False
+
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
         if key == arcade.key.E:

@@ -1739,6 +1739,29 @@
         }, 
         {
          "draworder":"topdown",
+         "id":33,
+         "name":"Blades",
+         "objects":[
+                {
+                 "gid":365,
+                 "height":128,
+                 "id":12,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":128,
+                 "x":7536,
+                 "y":7000
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":20,
          "locked":true,
          "name":"Enemy",
@@ -2581,8 +2604,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":33,
- "nextobjectid":12,
+ "nextlayerid":34,
+ "nextobjectid":13,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.1",
