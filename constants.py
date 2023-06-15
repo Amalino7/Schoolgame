@@ -68,6 +68,10 @@ FORCE_FOR_MOVEMENT= 100
 # Navigation speed
 SPRITE_SPEED = 3
 
+# Key offset
+KEY_OFSET = 18
+FIRST_KEY_ID = 20
+
 # Laser speed
 LASER_SPEED = 5
 

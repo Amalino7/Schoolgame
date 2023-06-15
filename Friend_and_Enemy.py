@@ -342,7 +342,7 @@ class BulletSprite(arcade.Sprite):
                     angle = math.pi/2
                 else:
                     angle = -math.pi/2
-            physics_engine.rotate(self,angle)
+            #physics_engine.rotate(self,angle)
             physics_engine.set_velocity(self,(0,0))
             physics_engine.apply_impulse(self,(20,0))
             
