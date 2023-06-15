@@ -74,7 +74,7 @@ def shoot_laser(laser, direction, emitter_pos):
 
 class Collector(arcade.Sprite):
     def __init__(self,image,x,y, tile_id):
-        super().__init__(texture=image,center_x=x,center_y=y)
+        super().__init__(texture=image, center_x=x, center_y=y, scale=0.5)
         self.active = False
         self.tile_id = tile_id
         self.is_door_in_Pengine = True
@@ -207,7 +207,7 @@ class GameWindow(arcade.Window):
         file_path = os.path.dirname(os.path.abspath(__file__))
         os.chdir(file_path)
         cwd=os.getcwd()
-        map_name = f"{cwd}\Tiledproject\maps\level{self.level}.json"
+        map_name = f"{cwd}\Tiledproject\maps\level{self.level+1}.json"
         map_name = r'{}'.format(map_name)
         # try:
         tile_map = arcade.load_tilemap(map_name, SPRITE_SCALING_TILES)
@@ -230,10 +230,10 @@ class GameWindow(arcade.Window):
         self.locks = tile_map.sprite_lists['Locks']
         self.reflector_list = tile_map.sprite_lists['Reflectors']
         self.collector_list = arcade.SpriteList()
-        self.locked_doors = arcade.SpriteList()
         self.door_list = arcade.SpriteList()
-        self.emitter_list = arcade.SpriteList()
-        self.collector_door_list = arcade.SpriteList()
+        self.locked_doors = []
+        self.emitter_list = []
+        self.collector_door_list = []
         self.spawn_points = tile_map.object_lists["Spawn"]
 
 
@@ -426,7 +426,7 @@ class GameWindow(arcade.Window):
         def lock_hit_by_player_handler(player_sprite, lock_sprite, _arbiter, _space, _data):
             if self.is_trying_to_take_object == True:
                 for key in self.held_keys:
-                    if ((key.properties['tile_id']-KEY_OFSET)+(key.properties['tile_id']-FIRST_KEY_ID)) == lock_sprite.properties['tile_id']:
+                    if (key.properties['tile_id']-KEY_OFSET) == lock_sprite.properties['tile_id']:
                         lock_sprite.remove_from_sprite_lists()
                         key.remove_from_sprite_lists()
                         self.keycount -= 1
@@ -674,7 +674,7 @@ class GameWindow(arcade.Window):
 
         if key == arcade.key.ESCAPE and self.impersonating == True and self.can_exit == True:
 
-            if hasattr(self.player_sprite,"move"):
+            if hasattr(self.player_sprite, "move"):
                 self.player_sprite.move = True
             self.player_sprite = self.player_sprite_old
             self.impersonating = False
@@ -870,7 +870,8 @@ class GameWindow(arcade.Window):
             self.laser.state = False
         for door in self.door_list:
             if arcade.check_for_collision_with_list(self.laser, door.spritelist):
-                self.laser.state = False
+                if not door.state:
+                    self.laser.state = False
 
         # Lever/Emmiter logic
         for i in range(len(self.lever_list)):
