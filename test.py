@@ -10,7 +10,6 @@ from constants import *
 import random
 from Friend_and_Enemy import *
 
-
 def scale_params(Blades, height):
     for blade in Blades:
         try:
@@ -44,7 +43,6 @@ class Laser(arcade.Sprite):
         else:
             self.dirx = 0.0
             self.diry = math.sin(math.radians(degrees))
-
         if self.direction > 3:
             self.direction = 0
         elif self.direction < 0:
@@ -401,7 +399,7 @@ class GameWindow(arcade.Window):
                 enemy_sprite.attack_cooldown = 1
                 player_sprite.HP -= 1
                 if player_sprite.HP <= 0:
-                    self.setup()
+                    self.reload()
         self.physics_engine.add_collision_handler("enemy", "player", post_handler=short_attack_enemy)
 
         def push_hit_handler(bullet_sprite, push_sprite, _arbiter, _space, _data):
@@ -938,13 +936,7 @@ class GameWindow(arcade.Window):
         self.item_list.draw_hit_boxes()
         self.pushable_objects_list.draw_hit_boxes()
         self.player_list.draw_hit_boxes()
-        if self.enemy_list[0].return_path is not None:
-            arcade.draw_line_strip(self.enemy_list[0].return_path, arcade.color.GRAPE, 2)
-        try:
-            arcade.draw_line_strip(self.friend.path, arcade.color.BLUE, 2)
-        except:
-            pass
-        self.finish_line.draw_hit_boxes(color=arcade.color_from_hex_string("FF0000"), line_thickness=1.2)
+        self.finish_line.draw_hit_boxes(color=arcade.color_from_hex_string("FF0000"), line_thickness = 1.2)
         drawDoors(self.door_list)
 
         self.gui_camera.use()
